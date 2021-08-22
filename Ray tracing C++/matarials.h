@@ -12,7 +12,7 @@ protected:
 	int emissionType;
 
 public:
-	Matarial(float absorb = 0.2,
+	Matarial(float absorb = 0.02,
 			 float through = 0.0f,
 			 float emission = 0.0f,
 			 float reflectDiv = 0.0f,
@@ -56,6 +56,7 @@ public:
 	virtual void setEmissionType(int emissionType);
 
 	virtual float getEmissionFactor(float distance);
+	// virtual light BSDF();
 };
 
 #endif

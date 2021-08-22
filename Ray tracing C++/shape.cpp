@@ -14,8 +14,8 @@ Light calculateLight(
     Matarial matarial,
     ShapeSet *shapes,
     int depth,
-    float lightDiv = 0 * PI / 100,
-    float ambience = 0.85,
+    float lightDiv = 1 * PI / 100,
+    float ambience = 0.5,
     float reflects = 1,
     float throughs = 0,
     float lights = 1)
@@ -57,21 +57,22 @@ Light calculateLight(
          iter != shapes->lights.end(); iter++)
     {
 
-        Shape *shape = *iter;
+        Shape *light = *iter;
         for (int i = 0; i < lights; i++)
         {
-            Vector lightVector = randomVector(shape->getPoint() - point,
+            Vector lightVector = randomVector(light->getPoint() - point,
                                               lightDiv,
                                               float(rand()) / RAND_MAX);
 
             Intersection intersection(Ray(point, lightVector, 1e30));
-            if (shape->intersect(intersection))
+            if (light->intersect(intersection))
             {
-                finalLight.color += (shape->getMatarial().getEmission() * (1 - matarial.getAbsorb()) / (float(lights) * shape->getMatarial().getEmissionFactor((shape->getPoint() - point).length()))) *
-                                    shape->getMatarial().getDiffuse() * matarial.getDiffuse() * std::max(0.0f, dot(normal, lightVector));
+                finalLight.color += (light->getMatarial().getEmission() * (1 - matarial.getAbsorb()) / 
+                                     (float(lights) * light->getMatarial().getEmissionFactor((light->getPoint() - point).length()))) *
+                                    light->getMatarial().getDiffuse() * matarial.getDiffuse() * std::max(0.0f, dot(normal, lightVector));
 
-                finalLight.color += (shape->getMatarial().getEmission() * (1 - matarial.getAbsorb()) / (float(lights) * shape->getMatarial().getEmissionFactor((shape->getPoint() - point).length()))) *
-                                    shape->getMatarial().getSpecular() * matarial.getSpecular() * std::max(0.0f, dot(normal, (lightVector + income).normalized()));
+                finalLight.color += (light->getMatarial().getEmission() * (1 - matarial.getAbsorb()) / (float(lights) * light->getMatarial().getEmissionFactor((light->getPoint() - point).length()))) *
+                                    light->getMatarial().getSpecular() * matarial.getSpecular() * std::max(0.0f, dot(normal, (lightVector + income).normalized()));
 
             }
         }

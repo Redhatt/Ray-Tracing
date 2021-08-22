@@ -3,6 +3,8 @@
 #include <thread>
 #include <vector>
 #include <string>
+#include <pthread.h>
+#include <queue>
 
 #include "vector.cpp"
 #include "ray.cpp"
@@ -13,98 +15,168 @@
 #include "light.cpp"
 #include "objParser.cpp"
 
-
 using namespace std;
 
-void scene(int b, int a, int w, int h, int width, int height, Camera &camera, ShapeSet &shapes, vector<vector<string>> &v)
+struct ThreadData
+{
+    int id, b, a, w, h, width, height;
+    Camera *camera;
+    ShapeSet *shapes;
+    vector<vector<string>> *v;
+};
+
+struct Task
+{
+    int id;
+    ThreadData *data;
+    void *(*f)(void *args);
+};
+
+inline void *executeTask(Task *task)
+{
+    void *r = (*task->f)(task->data);
+    cout<<"Task id: "<< task->id<<" has been executed.\n";
+    return r;
+}
+
+queue<Task*> taskQueue;
+
+pthread_mutex_t mutexQueue;
+pthread_cond_t condQueue;
+
+void submitTask(Task *task)
+{
+    pthread_mutex_lock(&mutexQueue);
+    taskQueue.push(task);
+    pthread_mutex_unlock(&mutexQueue);
+    pthread_cond_signal(&condQueue);
+    cout<<"Task id: "<<task->id<<" submitted. Current queue size: "<<taskQueue.size()<<endl;
+}
+
+void *startThread(void *args)
+{
+    int *id = (int *) args;
+    while (!taskQueue.empty()) {
+        Task *task;
+
+        pthread_mutex_lock(&mutexQueue);
+
+        // if (taskQueue.empty()) break;
+
+        // while (taskQueue.empty()) {
+        //     pthread_cond_wait(&condQueue, &mutexQueue);
+        // }
+
+        task = taskQueue.front();
+        taskQueue.pop();
+
+        pthread_mutex_unlock(&mutexQueue);
+
+        cout<<"Task id: "<<task->id<<" aquired on thread id: "<<*id<<". Starting execution.\n";
+        executeTask(task);
+    }
+    return NULL;
+}
+
+
+// void scene(int b, int a, int w, int h, int width, int height, Camera &camera, ShapeSet &shapes, vector<vector<string>> &v)
+void *scene(void *args)
 {
 
-    // int done = 0;
-    int rayp = 1;
+    struct ThreadData *data;
+    data = (struct ThreadData *) args;
+
+    int b      = data->b     ;
+    int a      = data->a     ;
+    int w      = data->w     ;
+    int h      = data->h     ;
+    int width  = data->width ;
+    int height = data->height;
+
     srand(time(0));
-    for (int y = h - 1; y >= a; y--)
-    {
-        for (int x = b; x < w; x++)
-        {   
+    for (int y = h - 1; y >= a; y--) {
+        for (int x = b; x < w; x++) {
+
             int r, g, b;
-            Ray ray = camera.getRay(x, y, width, height);
+            int depth = 0;
+
+            Ray ray = data->camera->getRay(x, y, width, height);
             Intersection intersection(ray);
-            shapes.intersect(intersection);
-            int depth = 1;
-            intersection.getSurfaceLight(ray.direction, &shapes, depth);
+            data->shapes->intersect(intersection);
+
+            intersection.getSurfaceLight(ray.direction, data->shapes, depth);
             intersection.light.color.applyGammaCorrection(1.0, 2.2);
             intersection.light.color.clamp(0, 1);
+
             r = 255 * intersection.light.color.r;
             g = 255 * intersection.light.color.g;
             b = 255 * intersection.light.color.b;
-            v[x][y] = to_string(r) + " " + to_string(g) + " " + to_string(b) + "\n";
-        }
 
-        // if (y%3 == 0) cout<<float(done) * 100/(w*h)<<" ...."<<endl;
+            (*data->v)[x][y] = to_string(r) + " " + to_string(g) + " " + to_string(b) + "\n";
+        }
     }
-    cout << "DONE" << endl;
+    return NULL;
 }
 
 int main()
 {
 
-    int height = 1080;
-    int width = 1920;
+    int height = 500;
+    int width = 1000;
 
-    Point cameraOrigin = Point(5.2, 4.5, 9);
-    Vector cameraTraget = Vector(5.2, 4.5, 0.0);
-    Vector cameraGuide = Vector(0, 1, 0);
-    float cameraFOV = PI / 4;
+    Point cameraOrigin = Point(0, 3, 5);
+    Vector cameraTraget = Vector(0, 0, 0);
+    Vector cameraGuide = Vector(0, 0, 1);
+    float cameraFOV = PI / 6;
     float cameraRatio = float(width) / float(height);
 
     class PerspectiveCamera camera = PerspectiveCamera(cameraOrigin, cameraTraget, cameraGuide, cameraFOV, cameraRatio);
 
     ShapeSet shapes;
-    fileReader("LOGO.obj", &shapes);
+    fileReader("sphere.obj", &shapes);
 
-    // Plane backWall(Point(0, -1, 0), Vector(0, 1, 0));
-    // Matarial mat1 = Matarial(0.8, 0.0, 0.0, PI/30, 0.0f,
+    Plane backWall(Point(0, -1, 0), Vector(0, 1, 0));
+    // Matarial mat1 = Matarial(0.8, 0.0, 0.0, PI/30, 0.0f, 2,
     //                          Color(0.5, 0.5, 0.5),
     //                          Color(0.5, 0.5, 0.5),
     //                          Color(1.0, 1.0, 1.0));
-    // // Matarial mat1 = Matarial();
-    // backWall.setMatarial(mat1);
-    // // shapes.addShape(&backWall);
-    // // shapes.addLight(&backWall);
+    Matarial mat1 = Matarial();
+    backWall.setMatarial(mat1);
+    // shapes.addShape(&backWall);
 
-    // Plane floor(Point(0, 0, -1), Vector(0, 0, 1));
-    // Matarial mat2 = Matarial(0.8, 0.0, 0.0, PI / 50, 0.0f,
-    //                          Color(0.4, 0.3, 0.2),
-    //                          Color(0.4, 0.3, 0.2),
-    //                          Color(1.0, 1.0, 1.0));
-    // floor.setMatarial(mat2);
-    // // shapes.addShape(&floor);
+    Plane floor(Point(0, 0, -1), Vector(0, 0, 1));
+    Matarial mat2 = Matarial(0.85, 0, 0, PI / 40, 0.0f, 2,
+                             Color(0.8313, 0.466, 0.0745),
+                             Color(0.8313, 0.466, 0.0745),
+                             Color(1.0, 1.0, 1.0));
+    floor.setMatarial(mat2);
+    // shapes.addShape(&floor);
 
-    // Sphere ball1(Point(4, 0, 0), 1);
-    // Matarial mat3 = Matarial(0.02, 0.0, 0.0, PI / 100, 0.0f,
-    //                          Color(0.2, 0.1, 0.05),
-    //                          Color(0.2, 0.1, 0.05),
-    //                          Color(1.0, 1.0, 1.0));
-    // ball1.setMatarial(mat3);
-    // // shapes.addShape(&ball1);
+    Sphere ball1(Point(0.2, 0.2, 1.5), 0.3);    
+    Matarial mat3 = Matarial(0.02, 0.0, 0.0, PI / 100, 0.0f, 2,
+                             Color(0.2, 0.1, 0.05),
+                             Color(0.2, 0.1, 0.05),
+                             Color(1.0, 1.0, 1.0));
+    ball1.setMatarial(mat3);
+    // shapes.addShape(&ball1);
 
-    // Sphere ball2(Point(0, 0, 0), 1);
-    // Matarial mat4 = Matarial(0.02, 0.0, 0.0, PI / 100, 0.0f,
-    //                          Color(0.1, 0.05, 0.2),
-    //                          Color(0.1, 0.05, 0.2),
-    //                          Color(1.0, 1.0, 1.0));
-    // ball2.setMatarial(mat4);
-    // // shapes.addShape(&ball2);
+    Sphere ball2(Point(-1, 0, 0), 1);
+    Matarial mat4 = Matarial(0.02, 0.0, 0.0, PI / 100, 0.0f, 2,
+                             Color(0.1, 0.05, 0.2),
+                             Color(0.1, 0.05, 0.2),
+                             Color(1.0, 1.0, 1.0));
+    ball2.setMatarial(mat4);
+    // shapes.addShape(&ball2);
 
-    // Sphere ball3(Point(0, 0, 4), 1);
-    // Matarial mat5 = Matarial(0.02, 0.0, 0.0, PI / 100, 0.0f,
-    //                          Color(0.05, 0.2, 0.1),
-    //                          Color(0.05, 0.2, 0.1),
-    //                          Color(1.0, 1.0, 1.0));
-    // ball3.setMatarial(mat5);
-    // // shapes.addShape(&ball3);
+    Sphere ball3(Point(2.5, 0, 0), 1);
+    Matarial mat5 = Matarial(0.02, 0.0, 0.0, PI / 100, 0.0f, 2,
+                             Color(0.05, 0.2, 0.1),
+                             Color(0.05, 0.2, 0.1),
+                             Color(1.0, 1.0, 1.0));
+    ball3.setMatarial(mat5);
+    // shapes.addShape(&ball3);
 
-    Sphere light(Point(-500, -500, 500), 1);
+    Sphere light(Point(10, 5, 5 ), 1);
     Matarial mat6 = Matarial(0.0, 0.0, 0.5, PI / 100, 0.0f, 0,
                              Color(1.0, 1.0, 1.0),
                              Color(1.0, 1.0, 1.0),
@@ -113,55 +185,68 @@ int main()
     shapes.addShape(&light);
     shapes.addLight(&light);
 
-    // Triangle tri1(Point(4, 0, 0), Point(0, 0, 0), Point(0, 0, 4));
-    // Matarial mat7 = Matarial(0.9, 0.0, 0.0, PI / 100, 0.0f,
-    //                          Color(0.5, 0.4, 0.6),
-    //                          Color(0.5, 0.4, 0.6),
-    //                          Color(1.0, 1.0, 1.0));
-    // tri1.setMatarial(mat7);
-    // // shapes.addShape(&tri1); 
+    vector<vector<string>> v(width, vector<string>(height)); 
 
+    int i, noThreads = 8;
+    struct ThreadData dataArr[noThreads];
+    pthread_t threadArr[noThreads];
 
-    // vector<Point> polyPoints = {Point(-4, 0, 0),
-    //                             Point(-5, 0, 0), 
-    //                             Point(-5, 0, 3),
-    //                             Point(-4, 0, 3)};
+    pthread_mutex_init(&mutexQueue, NULL);
+    pthread_cond_init(&condQueue, NULL);
 
-    // Polygon poly(polyPoints);
-    // Matarial mat8 = Matarial(0.9, 0.0, 0.0, PI / 100, 0.0f,
-    //                          Color(0.8, 0.5, 0.2),
-    //                          Color(0.8, 0.5, 0.2),
-    //                          Color(1.0, 1.0, 1.0));
-    // poly.setMatarial(mat8);
-    // // shapes.addShape(&poly); 
+    int nGridX = 50;
+    int GridY = 50;
 
+    int noTask = height * width / (nGridX * GridY);
 
+    cout<<"Total number of tasks: "<<noTask<<endl;
+    for (int x=0; x<width; x+=nGridX) {
+        for (int y=0; y<height; y+=GridY) {
+            Task *task = new Task;
+            ThreadData *data = new ThreadData;
+            data->id     = (x*width/nGridX) + (y/GridY);
+            data->b      = x;
+            data->a      = y;
+            data->w      = min((x+nGridX), width);
+            data->h      = min((y+GridY), height);
+            data->width  = width;
+            data->height = height;
+            data->camera = &camera;
+            data->shapes = &shapes;
+            data->v      = &v;
 
-    vector<vector<string>> v(width, vector<string>(height));
+            task->id = (x*width/nGridX) + (y/GridY);
+            task->data = data;
+            task->f = scene;
 
-    // scene(0, 0, width, height, width, height, camera, shapes, v);
-    
-    int no = 8;
-    int times = 1;
-        thread th1(scene, 0 * width / no, 0, 1 * width / no, height, width, height, ref(camera), ref(shapes), ref(v));
-        thread th2(scene, 1 * width / no, 0, 2 * width / no, height, width, height, ref(camera), ref(shapes), ref(v));
-        thread th3(scene, 2 * width / no, 0, 3 * width / no, height, width, height, ref(camera), ref(shapes), ref(v));
-        thread th4(scene, 3 * width / no, 0, 4 * width / no, height, width, height, ref(camera), ref(shapes), ref(v));
-        thread th5(scene, 4 * width / no, 0, 5 * width / no, height, width, height, ref(camera), ref(shapes), ref(v));
-        thread th6(scene, 5 * width / no, 0, 6 * width / no, height, width, height, ref(camera), ref(shapes), ref(v));
-        thread th7(scene, 6 * width / no, 0, 7 * width / no, height, width, height, ref(camera), ref(shapes), ref(v));
-        thread th8(scene, 7 * width / no, 0, 8 * width / no, height, width, height, ref(camera), ref(shapes), ref(v));
+            submitTask(task);
+        }
+    }
 
-        th1.join();
-        th2.join();
-        th3.join();
-        th4.join();
-        th5.join();
-        th6.join();
-        th7.join();
-        th8.join();
+    for (i=0; i<noThreads; i++)
+    {
+        int *id = new int();
+        *id = i;
+        if (pthread_create(&threadArr[i], NULL, &startThread, id)) {
+            cout<<"Error in Thread "<<i;
+            exit(-1);
+        }
+        else cout<<"Running Thread "<<i;
 
-    cout << "Complete" << endl;
+        cout<<endl;
+    }
+
+    for (i=0; i<noThreads; i++) {
+        if (pthread_join(threadArr[i], NULL)) cout<<"Error in ending Thread "<<i;
+        else cout<<"Ending Thread successfully "<<i;
+
+        cout<<endl;
+    }
+
+    pthread_mutex_destroy(&mutexQueue);
+    pthread_cond_destroy(&condQueue);
+
+    cout << "Completed! Writing file." << endl;
 
     ofstream file;
     file.open("test.ppm");
@@ -174,6 +259,7 @@ int main()
         }
     }
     file.close();
+    cout<<"file writing completed!\n";
 
     return 0;
 }

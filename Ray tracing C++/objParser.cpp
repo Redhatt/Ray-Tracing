@@ -28,7 +28,7 @@ string strip(const string &str)
     return std::string(start_it, end_it.base()); 
 }
 
-vector<string> split(const string &str, char chr=' ')
+vector<string> split(const string &str, char splitChar=' ')
 {
 	vector<string> ans;
 	int n = str.size();
@@ -36,9 +36,9 @@ vector<string> split(const string &str, char chr=' ')
 
 	while (j<n)
 	{
-		while (str[j] != chr && j<n) j++;
+		while (str[j] != splitChar && j<n) j++;
 		ans.push_back(str.substr(i, j-i));
-		while (str[j] == chr && j<n) j++;
+		while (str[j] == splitChar && j<n) j++;
 		i = j;
 	}
 
@@ -70,13 +70,9 @@ void fileReader(string filename, ShapeSet *shapes)
 
 				vector<int> temp;
 				for (int k = 1; k<n; k++)
-				{
-					int i = 0;
-					while (i<check2[k].size() && check2[k][i] != '/') i++;
-					if (i<check2[k].size()) 
-					{
-						temp.push_back(stoi(check2[k].substr(0, i)));
-					}
+				{	
+					vector<string> check3 = split(check2[k], '/');
+					temp.push_back(stoi(check3[0]));
 				}
 				faces.push_back(temp);
 			}

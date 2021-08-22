@@ -12,7 +12,7 @@
 class Shape
 {
 public:
-    int maxDepth = 3;
+    int maxDepth = 1;
     virtual ~Shape() {}
 
     virtual bool intersect( Intersection &intersection) = 0;
