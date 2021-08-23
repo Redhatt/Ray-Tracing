@@ -12,7 +12,7 @@ protected:
 	int emissionType;
 
 public:
-	Matarial(float absorb = 0.02,
+	Matarial(float absorb = 0.01,
 			 float through = 0.0f,
 			 float emission = 0.0f,
 			 float reflectDiv = 0.0f,

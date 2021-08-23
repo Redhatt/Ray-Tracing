@@ -9,6 +9,15 @@
 #include "color.h"
 #include "light.h"
 
+
+struct TreeData
+{
+    int start = -1;
+    int end = -1;
+    Vector left;
+    Vector right;
+};
+
 class Shape
 {
 public:
@@ -20,6 +29,7 @@ public:
     virtual Light light(const Point &point, const Point &lastPoint, Vector &out, int depth, ShapeSet *shapes) = 0;
     virtual Point getPoint() = 0;
     virtual Matarial getMatarial() = 0;
+    virtual Vector maxAlong(const Vector &axis) = 0;
 };
 
 class ShapeSet : public Shape
@@ -28,6 +38,8 @@ public:
     ShapeSet();
     std::vector<Shape *> shapes;
     std::vector<Shape *> lights;
+    int minSize = 1;
+    TreeData tree[10000];
     virtual ~ShapeSet();
 
     void addShape(Shape *shape);
@@ -39,6 +51,11 @@ public:
     virtual bool doesIntersectLight(const Ray &ray);
     virtual Point getPoint();
     virtual Matarial getMatarial();
+    virtual Vector maxAlong(const Vector &axis);
+    virtual void buildTree(int node, int low, int high);
+    virtual int setBounds(int node, int low, int high);
+    virtual bool doesIntersectBound(const Ray &ray, const Vector &v1, const Vector &v2);
+    virtual bool intersectTree(int node, Intersection &intersection);
 };
 
 class Plane : public Shape
@@ -59,8 +76,8 @@ public:
     virtual void setMatarial(const Matarial &matarial);
     virtual Matarial getMatarial();
     virtual Point getPoint();
-    virtual Vector getNormal(const Point& point);      
-
+    virtual Vector getNormal(const Point& point); 
+    virtual Vector maxAlong(const Vector &axis);     
 };
 
 class Sphere : public Shape
@@ -81,6 +98,7 @@ public:
     virtual void setMatarial(const Matarial &matarial);
     virtual Matarial getMatarial();
     virtual Point getPoint();
+    virtual Vector maxAlong(const Vector &axis);
 };
 
 class Triangle : public Shape
@@ -102,7 +120,8 @@ class Triangle : public Shape
         virtual Matarial getMatarial();
         virtual void setMatarial(const Matarial &matarial);
         virtual bool PointInTriangle (const Point &pt);
-        virtual Vector getNormal(const Point& point);      
+        virtual Vector getNormal(const Point& point);
+        virtual Vector maxAlong(const Vector &axis);     
 };
 
 class Polygon : public Shape
@@ -124,6 +143,7 @@ class Polygon : public Shape
         virtual void setMatarial(const Matarial &matarial);
         virtual bool PointInPolygon (const Point &pt);
         virtual Vector getNormal(const Point& point); 
+        virtual Vector maxAlong(const Vector &axis);
 };
 
 #endif

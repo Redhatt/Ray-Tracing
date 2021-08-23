@@ -50,7 +50,7 @@ void submitTask(Task *task)
     taskQueue.push(task);
     pthread_mutex_unlock(&mutexQueue);
     pthread_cond_signal(&condQueue);
-    cout<<"Task id: "<<task->id<<" submitted. Current queue size: "<<taskQueue.size()<<endl;
+    // cout<<"Task id: "<<task->id<<" submitted. Current queue size: "<<taskQueue.size()<<endl;
 }
 
 void *startThread(void *args)
@@ -72,7 +72,7 @@ void *startThread(void *args)
 
         pthread_mutex_unlock(&mutexQueue);
 
-        cout<<"Task id: "<<task->id<<" aquired on thread id: "<<*id<<". Starting execution.\n";
+        // cout<<"Task id: "<<task->id<<" aquired on thread id: "<<*id<<". Starting execution.\n";
         executeTask(task);
     }
     return NULL;
@@ -105,7 +105,7 @@ void *scene(void *args)
             data->shapes->intersect(intersection);
 
             intersection.getSurfaceLight(ray.direction, data->shapes, depth);
-            intersection.light.color.applyGammaCorrection(1.0, 2.2);
+            // intersection.light.color.applyGammaCorrection(1.0, 2.2);
             intersection.light.color.clamp(0, 1);
 
             r = 255 * intersection.light.color.r;
@@ -124,33 +124,30 @@ int main()
     int height = 500;
     int width = 1000;
 
-    Point cameraOrigin = Point(0, 3, 5);
-    Vector cameraTraget = Vector(0, 0, 0);
-    Vector cameraGuide = Vector(0, 0, 1);
+    Point cameraOrigin = Point(4.5, 4.5, 8);
+    Vector cameraTraget = Vector(4.5, 4.5, 0);
+    Vector cameraGuide = Vector(0, 1, 0);
     float cameraFOV = PI / 6;
     float cameraRatio = float(width) / float(height);
 
     class PerspectiveCamera camera = PerspectiveCamera(cameraOrigin, cameraTraget, cameraGuide, cameraFOV, cameraRatio);
 
     ShapeSet shapes;
-    fileReader("sphere.obj", &shapes);
 
-    Plane backWall(Point(0, -1, 0), Vector(0, 1, 0));
-    // Matarial mat1 = Matarial(0.8, 0.0, 0.0, PI/30, 0.0f, 2,
-    //                          Color(0.5, 0.5, 0.5),
-    //                          Color(0.5, 0.5, 0.5),
-    //                          Color(1.0, 1.0, 1.0));
-    Matarial mat1 = Matarial();
+    Plane backWall(Point(0, -2, 0), Vector(0, 1, 0));
+    Matarial mat1 = Matarial(0.9, 0.0, 0.0, PI/50000, 0.0f, 2,
+                             Color(0.0, 0.0, 0.0),
+                             Color(0.0, 0.0, 0.0),
+                             Color(1.0, 1.0, 1.0));
+    // Matarial mat1 = Matarial();
     backWall.setMatarial(mat1);
-    // shapes.addShape(&backWall);
 
     Plane floor(Point(0, 0, -1), Vector(0, 0, 1));
-    Matarial mat2 = Matarial(0.85, 0, 0, PI / 40, 0.0f, 2,
+    Matarial mat2 = Matarial(0.85, 0, 0, PI / 20, 0.0f, 2,
                              Color(0.8313, 0.466, 0.0745),
                              Color(0.8313, 0.466, 0.0745),
                              Color(1.0, 1.0, 1.0));
     floor.setMatarial(mat2);
-    // shapes.addShape(&floor);
 
     Sphere ball1(Point(0.2, 0.2, 1.5), 0.3);    
     Matarial mat3 = Matarial(0.02, 0.0, 0.0, PI / 100, 0.0f, 2,
@@ -158,7 +155,6 @@ int main()
                              Color(0.2, 0.1, 0.05),
                              Color(1.0, 1.0, 1.0));
     ball1.setMatarial(mat3);
-    // shapes.addShape(&ball1);
 
     Sphere ball2(Point(-1, 0, 0), 1);
     Matarial mat4 = Matarial(0.02, 0.0, 0.0, PI / 100, 0.0f, 2,
@@ -166,7 +162,6 @@ int main()
                              Color(0.1, 0.05, 0.2),
                              Color(1.0, 1.0, 1.0));
     ball2.setMatarial(mat4);
-    // shapes.addShape(&ball2);
 
     Sphere ball3(Point(2.5, 0, 0), 1);
     Matarial mat5 = Matarial(0.02, 0.0, 0.0, PI / 100, 0.0f, 2,
@@ -174,16 +169,25 @@ int main()
                              Color(0.05, 0.2, 0.1),
                              Color(1.0, 1.0, 1.0));
     ball3.setMatarial(mat5);
-    // shapes.addShape(&ball3);
 
-    Sphere light(Point(10, 5, 5 ), 1);
-    Matarial mat6 = Matarial(0.0, 0.0, 0.5, PI / 100, 0.0f, 0,
+    Sphere light(Point(3, 6, 5 ), 1);
+    Matarial mat6 = Matarial(0.0, 0.0, 0.2, PI / 100, 0.0f, 0,
                              Color(1.0, 1.0, 1.0),
                              Color(1.0, 1.0, 1.0),
                              Color(1.0, 1.0, 1.0));
     light.setMatarial(mat6);
-    shapes.addShape(&light);
+
+    fileReader("LOGO.obj", &shapes);
+    shapes.addShape(&backWall);
+    // shapes.addShape(&floor);
+    // shapes.addShape(&ball1);
+    // shapes.addShape(&ball2);
+    // shapes.addShape(&ball3);
+    // shapes.addShape(&light);
+
     shapes.addLight(&light);
+
+    shapes.buildTree(0, 0, shapes.shapes.size()-1);
 
     vector<vector<string>> v(width, vector<string>(height)); 
 
@@ -194,20 +198,25 @@ int main()
     pthread_mutex_init(&mutexQueue, NULL);
     pthread_cond_init(&condQueue, NULL);
 
-    int nGridX = 50;
+    int GridX = 50;
     int GridY = 50;
 
-    int noTask = height * width / (nGridX * GridY);
+    int X = ceil(float(width) / GridX);
+    int Y = ceil(float(height) / GridY);
+    int noTask = X * Y;
 
     cout<<"Total number of tasks: "<<noTask<<endl;
-    for (int x=0; x<width; x+=nGridX) {
-        for (int y=0; y<height; y+=GridY) {
+    for (int x=0, i=0; x<width; x+=GridX, i++) {
+        for (int y=0, j=0; y<height; y+=GridY, j++) {
             Task *task = new Task;
             ThreadData *data = new ThreadData;
-            data->id     = (x*width/nGridX) + (y/GridY);
+
+            task->id     = i*X + j;
+            data->id     = i*X + j;
+
             data->b      = x;
             data->a      = y;
-            data->w      = min((x+nGridX), width);
+            data->w      = min((x+GridX), width);
             data->h      = min((y+GridY), height);
             data->width  = width;
             data->height = height;
@@ -215,7 +224,6 @@ int main()
             data->shapes = &shapes;
             data->v      = &v;
 
-            task->id = (x*width/nGridX) + (y/GridY);
             task->data = data;
             task->f = scene;
 
