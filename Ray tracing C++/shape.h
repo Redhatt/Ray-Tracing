@@ -18,10 +18,16 @@ struct TreeData
     Vector right;
 };
 
+inline std::ostream &operator<<(std::ostream &os, TreeData &t)
+{
+    os << "start: "<<t.start << "\nend  : " << t.end << "\nleft : " << t.left << "\nright: " <<t.right<<endl;
+    return os;
+}
+
 class Shape
 {
 public:
-    int maxDepth = 1;
+    int maxDepth = 3;
     virtual ~Shape() {}
 
     virtual bool intersect( Intersection &intersection) = 0;
@@ -39,7 +45,8 @@ public:
     std::vector<Shape *> shapes;
     std::vector<Shape *> lights;
     int minSize = 1;
-    TreeData tree[10000];
+    TreeData tree[36000];
+    long long int calls = 0.0;
     virtual ~ShapeSet();
 
     void addShape(Shape *shape);
@@ -54,8 +61,10 @@ public:
     virtual Vector maxAlong(const Vector &axis);
     virtual void buildTree(int node, int low, int high);
     virtual int setBounds(int node, int low, int high);
-    virtual bool doesIntersectBound(const Ray &ray, const Vector &v1, const Vector &v2);
+    virtual bool doesIntersectBound(const Ray &ray, float &t, const Vector &v1, const Vector &v2);
     virtual bool intersectTree(int node, Intersection &intersection);
+    virtual bool doesBVCollide(const Vector &v1, const Vector &v2, const Vector &v3, const Vector &v4);
+    virtual void printTree();
 };
 
 class Plane : public Shape
@@ -65,6 +74,7 @@ protected:
     Point position;
     Vector normal;
     Matarial matarial;
+    float radius = 1e2;
 
 public:
     Plane(const Point &position, const Vector &normal);
@@ -77,7 +87,10 @@ public:
     virtual Matarial getMatarial();
     virtual Point getPoint();
     virtual Vector getNormal(const Point& point); 
-    virtual Vector maxAlong(const Vector &axis);     
+    virtual Vector maxAlong(const Vector &axis);
+    virtual void setRadius(float radius);
+    virtual float getRadius();
+
 };
 
 class Sphere : public Shape

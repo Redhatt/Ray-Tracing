@@ -2,10 +2,10 @@
 #include "shape.h"
 #include "color.h"
 
-#define RAY_T_MAX 1.0e30f
+#define RAY_T_MAX 1.0e30
 
 Ray::Ray()
-	: origin(0.0f, 0.0f, 0.0f),
+	: origin(0.0, 0.0, 0.0),
 	  direction(),
 	  tMax(RAY_T_MAX)
 {

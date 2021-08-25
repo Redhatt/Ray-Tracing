@@ -25,5 +25,5 @@ Ray PerspectiveCamera::makeRay(Vector2 point) const
 
 Ray PerspectiveCamera::getRay(int x, int y, int pWidth, int pHeight) const
 {
-	return makeRay(Vector2(((2.0f * x) / pWidth) - 1.0f, ((2.0f * y) / pHeight) - 1.0f));
+	return makeRay(Vector2(((2.0 * x) / pWidth) - 1.0, ((2.0 * y) / pHeight) - 1.0));
 }

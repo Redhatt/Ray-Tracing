@@ -1,7 +1,7 @@
 #include "light.h"
 
 Light::Light() : color(),
-				 rIndex(1.0f)
+				 rIndex(1.0)
 {
 }
 

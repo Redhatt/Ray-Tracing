@@ -102,10 +102,12 @@ void *scene(void *args)
 
             Ray ray = data->camera->getRay(x, y, width, height);
             Intersection intersection(ray);
-            data->shapes->intersect(intersection);
+
+            data->shapes->intersectTree(0, intersection);
+            // data->shapes->intersect(intersection);
 
             intersection.getSurfaceLight(ray.direction, data->shapes, depth);
-            // intersection.light.color.applyGammaCorrection(1.0, 2.2);
+            intersection.light.color.applyGammaCorrection(1.0, 2.2);
             intersection.light.color.clamp(0, 1);
 
             r = 255 * intersection.light.color.r;
@@ -120,22 +122,32 @@ void *scene(void *args)
 
 int main()
 {
-
     int height = 500;
     int width = 1000;
 
-    Point cameraOrigin = Point(4.5, 4.5, 8);
-    Vector cameraTraget = Vector(4.5, 4.5, 0);
-    Vector cameraGuide = Vector(0, 1, 0);
+    // Point cameraOrigin = Point(0, 5, 0);
+    // Point cameraOrigin = Point(4.5, 4.5, 8);
+    Point cameraOrigin = Point(10, 10, 10);
+    // Point cameraOrigin = Point(0, 3, 0);
+
+    Vector cameraTraget = Vector(0, 0, 0);
+    // Vector cameraTraget = Vector(4.5, 4.5, 0);
+
+    Vector cameraGuide = Vector(-1, -1, 1);
+    // Vector cameraGuide = Vector(0, 1, 0);
+    // Vector cameraGuide = Vector(0, 0, 1);
+
     float cameraFOV = PI / 6;
     float cameraRatio = float(width) / float(height);
 
     class PerspectiveCamera camera = PerspectiveCamera(cameraOrigin, cameraTraget, cameraGuide, cameraFOV, cameraRatio);
 
+    vector<vector<string>> v(width, vector<string>(height)); 
+
     ShapeSet shapes;
 
     Plane backWall(Point(0, -2, 0), Vector(0, 1, 0));
-    Matarial mat1 = Matarial(0.9, 0.0, 0.0, PI/50000, 0.0f, 2,
+    Matarial mat1 = Matarial(0.2, 0.0, 0.0, PI/50000, 0.0, 2,
                              Color(0.0, 0.0, 0.0),
                              Color(0.0, 0.0, 0.0),
                              Color(1.0, 1.0, 1.0));
@@ -143,54 +155,82 @@ int main()
     backWall.setMatarial(mat1);
 
     Plane floor(Point(0, 0, -1), Vector(0, 0, 1));
-    Matarial mat2 = Matarial(0.85, 0, 0, PI / 20, 0.0f, 2,
+    Matarial mat2 = Matarial(0.85, 0, 0, PI / 20, 0.0, 2,
                              Color(0.8313, 0.466, 0.0745),
                              Color(0.8313, 0.466, 0.0745),
                              Color(1.0, 1.0, 1.0));
     floor.setMatarial(mat2);
 
     Sphere ball1(Point(0.2, 0.2, 1.5), 0.3);    
-    Matarial mat3 = Matarial(0.02, 0.0, 0.0, PI / 100, 0.0f, 2,
+    Matarial mat3 = Matarial(0.02, 0.0, 0.0, PI / 100, 0.0, 2,
                              Color(0.2, 0.1, 0.05),
                              Color(0.2, 0.1, 0.05),
                              Color(1.0, 1.0, 1.0));
     ball1.setMatarial(mat3);
 
     Sphere ball2(Point(-1, 0, 0), 1);
-    Matarial mat4 = Matarial(0.02, 0.0, 0.0, PI / 100, 0.0f, 2,
+    Matarial mat4 = Matarial(0.02, 0.0, 0.0, PI / 100, 0.0, 2,
                              Color(0.1, 0.05, 0.2),
                              Color(0.1, 0.05, 0.2),
                              Color(1.0, 1.0, 1.0));
     ball2.setMatarial(mat4);
 
     Sphere ball3(Point(2.5, 0, 0), 1);
-    Matarial mat5 = Matarial(0.02, 0.0, 0.0, PI / 100, 0.0f, 2,
+    Matarial mat5 = Matarial(0.02, 0.0, 0.0, PI / 100, 0.0, 2,
                              Color(0.05, 0.2, 0.1),
                              Color(0.05, 0.2, 0.1),
                              Color(1.0, 1.0, 1.0));
     ball3.setMatarial(mat5);
 
-    Sphere light(Point(3, 6, 5 ), 1);
-    Matarial mat6 = Matarial(0.0, 0.0, 0.2, PI / 100, 0.0f, 0,
+    Sphere light(Point(10, 5, 5), 1);
+    Matarial mat6 = Matarial(0.0, 0.0, 50, PI / 100, 0.0, 2,
                              Color(1.0, 1.0, 1.0),
                              Color(1.0, 1.0, 1.0),
                              Color(1.0, 1.0, 1.0));
     light.setMatarial(mat6);
 
-    fileReader("LOGO.obj", &shapes);
-    shapes.addShape(&backWall);
-    // shapes.addShape(&floor);
-    // shapes.addShape(&ball1);
-    // shapes.addShape(&ball2);
-    // shapes.addShape(&ball3);
-    // shapes.addShape(&light);
+    clock_t start, fileRead, buildingTree, render, fileWrite, threadStart, threadEnd;
+
 
     shapes.addLight(&light);
+    shapes.addShape(&light);
+
+    shapes.addShape(&backWall);
+    shapes.addShape(&floor);
+    shapes.addShape(&ball1);
+    shapes.addShape(&ball2);
+    shapes.addShape(&ball3);
+
+    start = clock(); //---------------------
+
+    // fileReader("ultimateTest.obj", &shapes, 0.5);
+
+    fileRead = clock(); //---------------------
 
     shapes.buildTree(0, 0, shapes.shapes.size()-1);
+    // shapes.printTree();
 
-    vector<vector<string>> v(width, vector<string>(height)); 
+    buildingTree = clock(); //---------------------
 
+
+    // Vector v1(0, 0, 0);
+    // Vector v2(2, 2, 2);
+    // Vector v3(0, 2, 0);
+    // Vector v4(2, 4, 2);
+
+    // bool val = shapes.doesBVCollide(v1, v2, v3, v4);
+    // cout<<val<<endl;
+    // int ii;
+    // for (ii=32; ii>=-32; ii--) {
+    //     Ray ray(Point(1, 1, 0), Vector(-1, -1, ii).normalized(), 1e30);
+    //     Intersection intersection(ray);
+    //     bool val = shapes.intersectTree(0, intersection);
+    //     // bool val = shapes.intersect(intersection);
+    //     Point p = ray.calculate(intersection.t);
+    //     cout<<"{ i="<<ii<<" | val="<<val<<" | p="<<p<<" | calls: "<<shapes.calls<<"}"<<endl;
+    // }
+
+    if (1){
     int i, noThreads = 8;
     struct ThreadData dataArr[noThreads];
     pthread_t threadArr[noThreads];
@@ -211,8 +251,8 @@ int main()
             Task *task = new Task;
             ThreadData *data = new ThreadData;
 
-            task->id     = i*X + j;
-            data->id     = i*X + j;
+            task->id     = i*Y + j;
+            data->id     = i*Y + j;
 
             data->b      = x;
             data->a      = y;
@@ -244,6 +284,8 @@ int main()
         cout<<endl;
     }
 
+    threadStart = clock();
+
     for (i=0; i<noThreads; i++) {
         if (pthread_join(threadArr[i], NULL)) cout<<"Error in ending Thread "<<i;
         else cout<<"Ending Thread successfully "<<i;
@@ -251,6 +293,7 @@ int main()
         cout<<endl;
     }
 
+    threadEnd = clock();
     pthread_mutex_destroy(&mutexQueue);
     pthread_cond_destroy(&condQueue);
 
@@ -269,5 +312,26 @@ int main()
     file.close();
     cout<<"file writing completed!\n";
 
+    fileWrite = clock();
+
+    cout<<"File reading : "<<float(fileRead - start) / float(CLOCKS_PER_SEC/1000)<<" ms."<<endl;
+    cout<<"Building tree: "<<float(buildingTree - fileRead) / float(CLOCKS_PER_SEC/1000)<<" ms."<<endl;
+    cout<<"Thread start : "<<float(threadStart - buildingTree) / float(CLOCKS_PER_SEC/1000)<<" ms."<<endl;
+    cout<<"Render time  : "<<float(threadEnd - threadStart) / float(CLOCKS_PER_SEC/1000)<<" ms."<<endl;
+    cout<<"File writing : "<<float(fileWrite - threadEnd) / float(CLOCKS_PER_SEC/1000)<<" ms."<<endl;
+    cout<<"Total        : "<<float(fileWrite - start) / float(CLOCKS_PER_SEC/1000)<<" ms."<<endl;
+    cout<<"calls        : "<<shapes.calls<<endl; 
+    }
     return 0;
 }
+
+// depth: 0
+// total Pixels: 500x1000 = 500,000
+// total polygons: 500
+// total rays: 1x500,000 = 500,000
+// brute force: 500,000x500   = 250,000,000
+// tree approach: 500,000x34  =   1,700,000
+// brute reallity:            = 267,022,805
+// tree reallity:             =   4,869,989
+
+ 

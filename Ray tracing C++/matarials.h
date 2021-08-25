@@ -12,15 +12,15 @@ protected:
 	int emissionType;
 
 public:
-	Matarial(float absorb = 0.01,
-			 float through = 0.0f,
-			 float emission = 0.0f,
-			 float reflectDiv = 0.0f,
-			 float throughDiv = 0.0f,
+	Matarial(float absorb = 0.0002,
+			 float through = 0.0,
+			 float emission = 0.0,
+			 float reflectDiv = 0 * PI/1000,
+			 float throughDiv = 0.0,
 			 int emissionType = 2,
-			 const Color &ambient = Color(0.5f),
-			 const Color &diffuse = Color(0.5f),
-			 const Color &specular = Color(1.0f));
+			 const Color &ambient = Color(0.5),
+			 const Color &diffuse = Color(0.5),
+			 const Color &specular = Color(1.0));
 
 	virtual ~Matarial();
 

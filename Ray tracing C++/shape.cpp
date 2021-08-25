@@ -15,9 +15,9 @@ Light calculateLight(
     Matarial matarial,
     ShapeSet *shapes,
     int depth,
-    float lightDiv = 3 * PI / 100,
+    float lightDiv = 0 * PI / 1000,
     float ambience = 0.85,
-    float reflects = 1,
+    float reflects = 5,
     float throughs = 0,
     float lights = 5)
 {
@@ -26,9 +26,9 @@ Light calculateLight(
     Light finalLight = Light();
     finalLight.color += (matarial.getEmission()/matarial.getEmissionFactor((point - lastPoint).length()) + ambience) * matarial.getAmbient();
 
-    // rays relected
-    if (matarial.getReflectDiv() > 0.0f)
-    {
+    // // rays relected
+    // if (matarial.getReflectDiv() > 0.0f)
+    // {
         for (int i = 0; i < reflects; i++)
         {
             Vector reflectedVector = randomVector(2 * (dot(normal, income) * normal) - income,
@@ -36,15 +36,17 @@ Light calculateLight(
                                                   float(rand()) / RAND_MAX);
 
             Intersection intersection(Ray(point, reflectedVector, 1e30));
+            
             shapes->intersectTree(0, intersection);
             // shapes->intersect(intersection);
+
             shapes->intersectLight(intersection);
             intersection.getSurfaceLight(reflectedVector, shapes, depth + 1);
 
             finalLight.color += ((1 - matarial.getAbsorb()) / float(reflects)) * intersection.light.color *
                                 std::max(0.0f, dot(normal, (reflectedVector + income).normalized()));
         }
-    }
+    // }
 
     // rays through refarction
     if (matarial.getThroughDiv() > 0.0f)
@@ -70,13 +72,15 @@ Light calculateLight(
             
             shapes->intersectTree(0, intersection);
             // shapes->intersect(intersection);
-            if (light->intersect(intersection))
+
+            if (intersection.pShape == light || light->intersect(intersection))
             {
                 finalLight.color += (light->getMatarial().getEmission() * (1 - matarial.getAbsorb()) / 
                                      (float(lights) * light->getMatarial().getEmissionFactor((light->getPoint() - point).length()))) *
                                     light->getMatarial().getDiffuse() * matarial.getDiffuse() * std::max(0.0f, dot(normal, lightVector));
 
-                finalLight.color += (light->getMatarial().getEmission() * (1 - matarial.getAbsorb()) / (float(lights) * light->getMatarial().getEmissionFactor((light->getPoint() - point).length()))) *
+                finalLight.color += (light->getMatarial().getEmission() * (1 - matarial.getAbsorb()) / 
+                                      (float(lights) * light->getMatarial().getEmissionFactor((light->getPoint() - point).length()))) *
                                     light->getMatarial().getSpecular() * matarial.getSpecular() * std::max(0.0f, dot(normal, (lightVector + income).normalized()));
 
             }
@@ -112,6 +116,7 @@ bool ShapeSet::intersect(Intersection &intersect)
          iter != shapes.end();
          iter++)
     {
+        calls += 1;
         Shape *curshape = *iter;
         if (curshape->intersect(intersect))
             doesIntersect = true;
@@ -184,50 +189,157 @@ Matarial ShapeSet::getMatarial()
 
 bool ShapeSet::intersectTree(int node, Intersection &intersection)
 {
-    if (node > 3*shapes.size()) return false;
-    if (!doesIntersectBound(intersection.ray, tree[node].left, tree[node].right)) return false;
+    if (node >= 2*shapes.size() - 1) return false;
 
+    float t;
+    if (!doesIntersectBound(intersection.ray, t, tree[node].left, tree[node].right)) return false;
+    
+    // this is with below comment codes 196 line no: and below 221 line no: it didn't optimize rather increased calls
+    // if ((node == 0) && (!doesIntersectBound(intersection.ray, t, tree[node].left, tree[node].right))) return false;
+
+    bool check = false;
     if (tree[node].end - tree[node].start <= minSize) {
-        for (int i=i<tree[node].start; i<=tree[node].end; i++){
-            if (shapes[i]->intersect(intersection)) return true;
+        for (int i=tree[node].start; i<=tree[node].end; i++) {
+            calls += 1;
+            if (shapes[i]->intersect(intersection)) {
+                check = true;
+            }
         }
+        return check;
     }
 
-    if (intersectTree(2*node + 1, intersection)) return true;
-    if (intersectTree(2*node + 2, intersection)) return true;
+    bool checkBoth = false;
+    if (intersectTree(2*node + 1, intersection)) checkBoth = true;
+    if (intersectTree(2*node + 2, intersection)) checkBoth = true;
+    return checkBoth;
 
-    return false;
+    /*
+    if ray intersect with both childs then check if both childs bounding Volumes collides
+    and if bounding Volumes collide then we have no choice but to check intersection in both childs
+    otherwise we can priorities first intersecting child and return if intersection found in first because than
+    we are sure there is no early intersection in second child.
+    */
+
+    // float t1=1e30, t2=1e30;
+    // bool val1 = doesIntersectBound(intersection.ray, t1, tree[2*node +1].left, tree[2*node +1].right);
+    // bool val2 = doesIntersectBound(intersection.ray, t2, tree[2*node +2].left, tree[2*node +2].right);
+
+    // if (val1 && val2){
+    //     bool BVcollide = doesBVCollide(tree[2*node +1].left, tree[2*node +1].right,
+    //                                    tree[2*node +2].left, tree[2*node +2].right);
+    //     if (!BVcollide) {
+    //         if (t1<=t2) {
+    //             if (intersectTree(2*node + 1, intersection)) return true;
+    //             if (intersectTree(2*node + 2, intersection)) return true;
+    //         }
+    //         else { 
+    //             if (intersectTree(2*node + 2, intersection)) return true;
+    //             if (intersectTree(2*node + 1, intersection)) return true;
+    //         }
+    //     }
+    //     else {
+    //         bool checkBoth = false;
+    //         if (intersectTree(2*node + 1, intersection)) checkBoth = true;
+    //         if (intersectTree(2*node + 2, intersection)) checkBoth = true;
+    //         return checkBoth;
+    //     }
+    // }
+    // else if (val1) {
+    //     if (intersectTree(2*node + 1, intersection)) return true;
+    // }
+    // else if (val2) {
+    //     if (intersectTree(2*node + 2, intersection)) return true;
+    // }
+
+    // return false;
 }
 
-
-bool ShapeSet::doesIntersectBound(const Ray &ray, const Vector &v1, const Vector &v2)
+bool ShapeSet::doesBVCollide(const Vector &v1, const Vector &v2, const Vector &v3, const Vector &v4)
 {
-    float t_minx = 1e30;
-    float t_miny = 1e30;
-    float t_minz = 1e30;
-    float t_maxx = -1e30;
-    float t_maxy = -1e30;
-    float t_maxz = -1e30;
+    float x1=v1.x, x2=v2.x, x3=v3.x, x4=v4.x;
+    float y1=v1.y, y2=v2.y, y3=v3.y, y4=v4.y;
+    float z1=v1.z, z2=v2.z, z3=v3.z, z4=v4.z;
 
-    if (ray.direction.x != 0.0f) {
-        t_minx = (v1.x - ray.origin.x) / ray.direction.x;
-        t_maxx = (v2.x - ray.origin.x) / ray.direction.x;
+    if (x1>x2) swap(x1, x2);
+    if (x3>x4) swap(x3, x4);
+    if (y1>y2) swap(y1, y2);
+    if (y3>y4) swap(y3, y4);
+    if (z1>z2) swap(z1, z2);
+    if (z3>z4) swap(z3, z4);
+
+    if ((x2<x4) && (x2<=x3)) return false;
+    if ((y2<y4) && (y2<=y3)) return false;
+    if ((z2<z4) && (z2<=z3)) return false;
+
+    return true;
+}
+
+bool ShapeSet::doesIntersectBound(const Ray &ray, float &t, const Vector &v1, const Vector &v2)
+{
+    calls += 1;
+    float t_minx = -1e30;
+    float t_miny = -1e30;
+    float t_minz = -1e30;
+    float t_maxx = 1e30;
+    float t_maxy = 1e30;
+    float t_maxz = 1e30;
+
+    // for x
+    if ((ray.direction.x == 0.0f)) {
+        if (((v1.x <= ray.origin.x) && (ray.origin.x <= v2.x)) ||
+            ((v2.x <= ray.origin.x) && (ray.origin.x <= v1.x)))
+        {
+            // nothing
+        }
+        else return false;
+    }
+    else {
+        t_minx = (v1.x - ray.origin.x) / ray.direction.x ;
+        t_maxx = (v2.x - ray.origin.x) / ray.direction.x ;
+
+        if (t_maxx < t_minx) std::swap(t_maxx, t_minx);
     }
 
-    if (ray.direction.y != 0.0f) {
-        t_minx = (v1.y - ray.origin.y) / ray.direction.y;
-        t_maxx = (v2.y - ray.origin.y) / ray.direction.y;
+    // for y
+    if ((ray.direction.y == 0.0f)) {
+        if (((v1.y <= ray.origin.y) && (ray.origin.y <= v2.y)) ||
+            ((v2.y <= ray.origin.y) && (ray.origin.y <= v1.y)))
+        {
+            // nothing
+        }
+        else return false;
+    }
+    else {
+        t_miny = (v1.y - ray.origin.y) / ray.direction.y ;
+        t_maxy = (v2.y - ray.origin.y) / ray.direction.y ;
+
+        if (t_maxy < t_miny) std::swap(t_maxy, t_miny);
     }
 
-    if (ray.direction.z != 0.0f) {
-        t_minx = (v1.z - ray.origin.z) / ray.direction.z;
-        t_maxx = (v2.z - ray.origin.z) / ray.direction.z;
+    // for z
+    if ((ray.direction.z == 0.0f)) {
+        if (((v1.z <= ray.origin.z) && (ray.origin.z <= v2.z)) ||
+            ((v2.z <= ray.origin.z) && (ray.origin.z <= v1.z)))
+        {
+            // nothing
+        }
+        else return false;
+    }
+    else {
+        t_minz = (v1.z - ray.origin.z) / ray.direction.z ;
+        t_maxz = (v2.z - ray.origin.z) / ray.direction.z ;
+
+        if (t_maxz < t_minz) std::swap(t_maxz, t_minz);
     }
 
     if (min(t_maxx, min(t_maxy, t_maxz)) < max(t_minx, max(t_miny, t_minz))) return false;
 
+    t = max(t_minx, max(t_miny, t_minz));
+    if (min(t_maxx, min(t_maxy, t_maxz)) < 0.0f) return false;
+
     return true;
 }
+
 int ShapeSet::setBounds(int node, int low, int high)
 {
     float minx = (1e30);
@@ -267,28 +379,56 @@ int ShapeSet::setBounds(int node, int low, int high)
     tree[node].end = high;
     tree[node].left = Vector(minx, miny, minz);
     tree[node].right = Vector(maxx, maxy, maxz);
+
     return axis;
 }
 
 void ShapeSet::buildTree(int node, int low, int high)
 {
-    if (node > 3*shapes.size()) return;
+    if ((node >= 2*shapes.size() - 1) || high < low) return;
     int axis = setBounds(node, low, high);
 
     if (high - low + 1 < minSize) return;
     if (axis == 0) {
-        std::sort(shapes.begin()+low, shapes.begin()+high, 
-            [] (Shape *a, Shape *b) {return a->getPoint().x < b->getPoint().x;});
+        std::sort(shapes.begin()+low, shapes.begin()+high+1, 
+            [] (Shape *a, Shape *b) {
+                if (a->getPoint().x != b->getPoint().x)
+                    return a->getPoint().x < b->getPoint().x;
+                else if(a->getPoint().y != b->getPoint().y)
+                    return a->getPoint().y < b->getPoint().y;
+                else
+                    return a->getPoint().z < b->getPoint().z;
+                });
     }
     else if (axis == 1) {
-        std::sort(shapes.begin()+low, shapes.begin()+high, 
-            [] (Shape *a, Shape *b) {return a->getPoint().y < b->getPoint().y;});
+        std::sort(shapes.begin()+low, shapes.begin()+high+1, 
+            [] (Shape *a, Shape *b) {
+                if (a->getPoint().y != b->getPoint().y)
+                    return a->getPoint().y < b->getPoint().y;
+                else if(a->getPoint().x != b->getPoint().x)
+                    return a->getPoint().x < b->getPoint().x;
+                else
+                    return a->getPoint().z < b->getPoint().z;
+                });
     }
     else {
-        std::sort(shapes.begin()+low, shapes.begin()+high, 
-            [] (Shape *a, Shape *b) {return a->getPoint().z < b->getPoint().z;});
+        std::sort(shapes.begin()+low, shapes.begin()+high+1, 
+            [] (Shape *a, Shape *b) {
+                if (a->getPoint().z != b->getPoint().z)
+                    return a->getPoint().z < b->getPoint().z;
+                else if(a->getPoint().x != b->getPoint().x)
+                    return a->getPoint().x < b->getPoint().x;
+                else
+                    return a->getPoint().y < b->getPoint().y;
+                });
     }
 
+    // cout<<high<<" "<<low<<"______\n";
+    // for (int xx=low; xx<=high; xx++) {
+    //     Point p(shapes[xx]->getPoint());
+    //     cout<<p<<endl;
+    // }
+    // cout<<"______\n";
     int index = (low + high) / 2;
     buildTree(2*node + 1, low, index);
     buildTree(2*node + 2, index+1, high);
@@ -299,6 +439,21 @@ Vector ShapeSet::maxAlong(const Vector &axis)
     return Vector();
 }
 
+void ShapeSet::printTree()
+{
+    for (int i=0; i<10000; i++) {
+        if (tree[i].start == -1) break;
+        cout<<i<<" . {\n";
+        cout<<""<<tree[i];
+        cout<<"}\n";
+    }
+
+    for (int i=0; i<shapes.size(); i++) {
+        Point p = shapes[i]->getPoint();
+        cout<<i<<". {\n";
+        cout<<p<<"\n}\n";
+    }
+}
 
 Plane::Plane(const Point &position, const Vector &normal) : position(position),
                                                             normal(normal),
@@ -315,7 +470,7 @@ bool Plane::intersect(Intersection &intersection)
     // checking for intersection
     float dn = dot(intersection.ray.direction, normal);
 
-    // direction dot normal must not be 0.0
+    // direction dot normal must not be 0.0f
     if (dn == 0.0f)
         return false;
 
@@ -325,6 +480,11 @@ bool Plane::intersect(Intersection &intersection)
     // t must be in acceptable range of t_min and t_max of intersection
     if (t <= RAY_T_MIN || t > intersection.t)
         return false;
+
+    Point p = intersection.ray.calculate(t);
+    if ((p - position).length2() > sqr(radius)) {
+        return false;
+    }
 
     // updating intersection
     intersection.t = t;
@@ -338,7 +498,7 @@ bool Plane::doesIntersect(const Ray &ray)
     // checking for intersection
     float dn = dot(ray.direction, normal);
 
-    // direction dot normal must not be 0.0
+    // direction dot normal must not be 0.0f
     if (dn == 0.0f)
         return false;
 
@@ -348,6 +508,9 @@ bool Plane::doesIntersect(const Ray &ray)
     // t must be in acceptable range of t_min and t_max of ray
     if (t <= RAY_T_MIN || t >= ray.tMax)
         return false;
+
+    Point p = ray.calculate(t);
+    if ((p - position).length2() > sqr(radius)) return false;
 
     return true;
 }
@@ -384,7 +547,19 @@ Matarial Plane::getMatarial()
 
 Vector Plane::maxAlong(const Vector &axis)
 {
-    return Vector(1e10);
+    Vector v(axis);
+    v.normalize();
+    return Vector(radius * (v - (normal * dot(v, normal))) + position);
+}
+
+void Plane::setRadius(float r)
+{
+    radius = r;
+}
+
+float Plane::getRadius()
+{
+    return radius;
 }
 
 Sphere::Sphere(const Point &center, float radius) : center(center),
@@ -534,7 +709,7 @@ bool Triangle::intersect(Intersection &intersection)
     // checking for intersection
     float dn = dot(intersection.ray.direction, normal);
 
-    // direction dot normal must not be 0.0
+    // direction dot normal must not be 0.0f
     if (dn == 0.0f)
         return false;
 
@@ -561,7 +736,7 @@ bool Triangle::doesIntersect(const Ray &ray)
     // checking for intersection
     float dn = dot(ray.direction, normal);
 
-    // direction dot normal must not be 0.0
+    // direction dot normal must not be 0.0f
     if (dn == 0.0f)
         return false;
 
@@ -662,7 +837,7 @@ bool Polygon::intersect(Intersection &intersection)
     // checking for intersection
     float dn = dot(intersection.ray.direction, normal);
 
-    // direction dot normal must not be 0.0
+    // direction dot normal must not be 0.0f
     if (dn == 0.0f)
         return false;
 
@@ -689,7 +864,7 @@ bool Polygon::doesIntersect(const Ray &ray)
     // checking for intersection
     float dn = dot(ray.direction, normal);
 
-    // direction dot normal must not be 0.0
+    // direction dot normal must not be 0.0f
     if (dn == 0.0f)
         return false;
 
@@ -752,10 +927,9 @@ Vector Polygon::maxAlong(const Vector &axis)
         Vector v(points[i]);
         float res = dot(axis, v);
         if (res > val) {
-            res = val;
+            val = res;
             ans = i; 
         }
     }
-
     return Vector(points[ans]);
 }

@@ -5,9 +5,9 @@
 using namespace std;
 
 Vector::Vector()
-	: x(0.0f),
-	  y(1.0f),
-	  z(0.0f)
+	: x(0.0),
+	  y(1.0),
+	  z(0.0)
 {
 }
 
@@ -136,8 +136,8 @@ Vector Vector::operator-() const
 }
 
 Vector2::Vector2()
-	: u(0.0f),
-	  v(0.0f)
+	: u(0.0),
+	  v(0.0)
 {
 }
 

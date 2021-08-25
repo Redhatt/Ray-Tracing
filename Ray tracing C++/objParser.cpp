@@ -45,7 +45,7 @@ vector<string> split(const string &str, char splitChar=' ')
 	return ans;
 }
 
-void fileReader(string filename, ShapeSet *shapes) 
+void fileReader(string filename, ShapeSet *shapes, float randColor=0.0) 
 {
 
 	ifstream file;
@@ -110,6 +110,16 @@ void fileReader(string filename, ShapeSet *shapes)
 				polyPoints.push_back(Point(vertices[face[i]-1]));
 			}
 			Polygon* poly = new Polygon(polyPoints);
+
+			if (randColor != 0.0) {
+				Matarial mat = Matarial();
+				Color color = Color(randColor * float(rand()) / RAND_MAX, 
+									randColor * float(rand()) / RAND_MAX, 
+									randColor * float(rand()) / RAND_MAX);
+				mat.setAmbient(color);
+				mat.setAmbient(color);
+				poly->setMatarial(mat);
+			}
 			shapes->addShape(poly);
 		} else {
 			cout<<"error face with less than 3 vertices!\n";

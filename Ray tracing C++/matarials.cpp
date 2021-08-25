@@ -127,6 +127,6 @@ void Matarial::setEmissionType(int emissionType) {
 float Matarial::getEmissionFactor(float distance){
 	if (emissionType == 2) return sqr(distance);
 	else if (emissionType == 1) return distance;
-	else if (emissionType == 0) return 1.0f;
-	else return 1.0f;
+	else if (emissionType == 0) return 1.0;
+	else return 1.0;
 }
