@@ -27,7 +27,7 @@ inline std::ostream &operator<<(std::ostream &os, TreeData &t)
 class Shape
 {
 public:
-    int maxDepth = 4;
+    int maxDepth = 5;
     virtual ~Shape() {}
 
     virtual bool intersect( Intersection &intersection) = 0;

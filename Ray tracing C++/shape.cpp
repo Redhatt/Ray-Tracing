@@ -17,10 +17,10 @@ Light calculateLight(
     int depth,
     bool inside = false,
     float lightDiv = 0 * PI / 1000,
-    float ambience = 0.95,
-    int reflects = 1,
+    float ambience = 0.85,
+    int reflects = 3,
     int throughs = 1,
-    int lights = 1,
+    int lights = 3,
     int shadow = 1)
 {
     Vector out = -income;
@@ -30,7 +30,7 @@ Light calculateLight(
 
     // rays reflected
 
-    if (matarial.getReflection() && !inside) {
+    if (matarial.getReflection() && (!inside)) {
         for (int i = 0; i < reflects; i++)
         {
             Vector reflectedVector = randomVector(2 * (dot(normal, out) * normal) - out,
@@ -43,8 +43,7 @@ Light calculateLight(
 
             intersection.getSurfaceLight(reflectedVector, shapes, inside, depth + 1);
 
-            finalLight.color += ((1 - matarial.getAbsorb()) / float(reflects)) * intersection.light.color; //*
-                                // std::max(0.0f, dot(normal, (reflectedVector + out).normalized()));
+            finalLight.color += ((1 - matarial.getAbsorb()) / float(reflects)) * intersection.light.color;
         }
     }
 
@@ -55,7 +54,6 @@ Light calculateLight(
         {
             float n = 1.0 / matarial.getRIndex();
             if (inside) {
-                normal = -normal;
                 n = matarial.getRIndex();
             }
 
@@ -66,7 +64,7 @@ Light calculateLight(
             float critical = 1 - sqr(n) * (1 - sqr(dott));
             Intersection intersection;
 
-            if (critical < 0.0f) {
+            if (critical <= 0.0f) {
                 // total internal reflection.
                 Vector throughVector = 2 * (dot(normal, out) * normal) - out;
                 
@@ -83,12 +81,12 @@ Light calculateLight(
                 intersection.getSurfaceLight(throughVector, shapes, depth+1, !inside);
             }
 
-            finalLight.color += intersection.light.color;
+            finalLight.color += (matarial.getThrough() / float(throughs)) * intersection.light.color;
         }
     }
 
     // rays towards light
-    if (matarial.getLight() && !inside) {
+    if (matarial.getLight() && (!inside)) {
         for (std::vector<Shape *>::iterator iter = shapes->lights.begin();
              iter != shapes->lights.end(); iter++)
         {
@@ -118,7 +116,7 @@ Light calculateLight(
     }
 
     // rays to get ambient shadow
-    if (matarial.getAmbienceShadow() && !inside)
+    if (matarial.getAmbienceShadow() && (!inside))
     {
         for (int i=0; i<shadow; i++)
         {
@@ -131,7 +129,7 @@ Light calculateLight(
 
             if (intersection.pShape != NULL && intersection.pShape->getMatarial().getEmission() == 0.0f)
             {
-                finalLight.color *= 0.95;
+                finalLight.color *= 0.97;
             }
         }
     }

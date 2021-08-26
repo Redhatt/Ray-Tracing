@@ -77,16 +77,16 @@ int main()
     int height = 500;
     int width = 1000;
 
-    Point cameraOrigin = Point(-1, 8, 1);
+    // Point cameraOrigin = Point(-1, 8, 1);
     // Point cameraOrigin = Point(4, 4, 12);
-    // Point cameraOrigin = Point(10, 10, 10);
+    Point cameraOrigin = Point(8, 8, 8);
     // Point cameraOrigin = Point(0, 3, 0);
 
     // Vector cameraTraget = Vector(0, 0, 0);
     Vector cameraTraget = Vector(0, 0, 0);
 
-    // Vector cameraGuide = Vector(-1, -1, 1);
-    Vector cameraGuide = Vector(0, 0, 1);
+    Vector cameraGuide = Vector(-1, -1, 1);
+    // Vector cameraGuide = Vector(0, 0, 1);
     // Vector cameraGuide = Vector(0, 0, 1);
 
     float cameraFOV = PI / 8;
@@ -99,7 +99,7 @@ int main()
 
 
     // Sky box setup
-    float d = 1e2;
+    float d = 1e4;
     float radius = 1e10;
     Matarial skyMat = Matarial(0.8, 0.0, 0.0, PI/50, 
                                0.0, 0.01, 0,
@@ -108,6 +108,8 @@ int main()
                                Color(1.0, 1.0, 1.0));
     skyMat.setReflection(false);
     skyMat.setLight(false);
+    skyMat.setRefraction(false);
+    skyMat.setAmbienceShadow(false);
 
     Plane skyX(Point(d, 0, 0), Vector(-1, 0, 0));
     Plane skyX_(Point(-d, 0, 0), Vector(1, 0, 0));
@@ -146,7 +148,7 @@ int main()
     // // Matarial mat1 = Matarial();
     // backWall.setMatarial(mat1);
 
-    Plane floor(Point(0, 0, -1), Vector(0, 0, 1));
+    Plane floor(Point(0, 0, -6), Vector(0, 0, 1));
     Matarial mat2 = Matarial(0.85, 0, 0, PI / 50, 0.0, 0.01, 2,
                              Color(184, 255, 161),
                              Color(184, 255, 161),
@@ -169,31 +171,31 @@ int main()
     ball2.setMatarial(mat4);
 
     Sphere ball3(Point(1.2, -5, 1), 2);
-    Matarial mat5 = Matarial(0.02, 0.0, 0.0, PI / 100, 0.0, 0.0, 2,
+    Matarial mat5 = Matarial(0.02, 0.99, 0.0, PI / 100, 0.0, 0.0, 2,
                              Color(0, 0, 0),
                              Color(0, 0, 0),
                              Color(1.0, 1.0, 1.0));
 
-    mat5.setRIndex(1.41);
+    mat5.setRIndex(1.11);
     mat5.setRefraction(true);
     mat5.setReflection(false);
     ball3.setMatarial(mat5);
 
-    Sphere light(Point(5, 5, 5), 10);
-    Matarial mat6 = Matarial(0.0, 0.99, 10, PI / 100, 0.0, 0, 0,
+    Sphere light(Point(500, -500, 500), 100);
+    Matarial mat6 = Matarial(0.0, 0.0, 30, PI / 100, 0.0, 0, 0,
                              Color(1.0, 1.0, 1.0),
                              Color(1.0, 1.0, 1.0),
                              Color(1.0, 1.0, 1.0));
     light.setMatarial(mat6);
 
-    for (int j=0; j>=-20; j--){
-        for (int i=-20; i<20; i++) {
+    for (int j=20; j>=-50; j-=2){
+        for (int i=-50; i<50; i+=2) {
             
-            if ((i+20)%2 || (rand()%2)) continue;
+            if ((i+1000)%2) continue;
 
             float randColor = 0.8;
             float base = 0.2;
-            Sphere *ball = new Sphere(Point(i, j + 5 * float(rand()) / RAND_MAX, -0.5), 0.5);
+            Sphere *ball = new Sphere(Point(i, j + 5 * float(rand()) / RAND_MAX, -4.1), 1);
             Matarial mat = Matarial();
             mat.setReflection(!(i+j)%5);
             Color color = Color(base + randColor * float(rand()) / RAND_MAX, 
@@ -203,6 +205,7 @@ int main()
             mat.setAmbient(color);
             mat.setDiffuse(color);
             mat.setGrain(0.03);
+            mat.setRefraction(false);
             ball->setMatarial(mat);
 
             shapes.addShape(ball);
@@ -218,12 +221,12 @@ int main()
     // shapes.addShape(&backWall);
     shapes.addShape(&floor);
     // shapes.addShape(&ball1);
-    shapes.addShape(&ball2);
-    shapes.addShape(&ball3);
+    // shapes.addShape(&ball2);
+    // shapes.addShape(&ball3);
 
     start = clock(); //---------------------
 
-    // fileReader("LOGO.obj", &shapes, 0.0f);
+    fileReader("cube.obj", &shapes, 0.0f);
 
     fileRead = clock(); //---------------------
 
