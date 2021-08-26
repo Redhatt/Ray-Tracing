@@ -1,8 +1,8 @@
+#include "globals.h"
+
 #include "ray.h"
 #include "shape.h"
 #include "color.h"
-
-#define RAY_T_MAX 1.0e30
 
 Ray::Ray()
 	: origin(0.0, 0.0, 0.0),
@@ -45,21 +45,24 @@ Point Ray::calculate(float t) const
 Intersection::Intersection()
 	: ray(),
 	  t(RAY_T_MAX),
-	  pShape(NULL)
+	  pShape(NULL),
+	  light(Color(0.0, 0.0, 1.0), 1.0f)
 {
 }
 
 Intersection::Intersection(const Intersection &i)
 	: ray(i.ray),
 	  t(i.t),
-	  pShape(i.pShape)
+	  pShape(i.pShape),
+	  light(Color(0.0, 0.0, 1.0), 1.0f)
 {
 }
 
 Intersection::Intersection(const Ray &ray)
 	: ray(ray),
 	  t(ray.tMax),
-	  pShape(NULL)
+	  pShape(NULL),
+	  light(Color(0.0, 0.0, 1.0), 1.0f)
 {
 }
 
@@ -80,10 +83,10 @@ Point Intersection::position() const
 	return ray.calculate(t);
 }
 
-void Intersection::getSurfaceLight(Vector &out, ShapeSet *shapes, int depth)
+void Intersection::getSurfaceLight(Vector &out, ShapeSet *shapes, int depth, bool inside)
 {
 	if (pShape != NULL)
 	{
-		light = pShape->light(ray.calculate(t), ray.origin, out, depth, shapes);
+		light = pShape->light(ray.calculate(t), ray.origin, out, depth, inside, shapes);
 	}
 }

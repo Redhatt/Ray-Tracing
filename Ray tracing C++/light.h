@@ -1,6 +1,8 @@
 #ifndef LIGHT_H
 #define LIGHT_H
 
+#include "globals.h"
+
 #include "color.h"
 
 // during any operation the rIndex of first argument will be passed only

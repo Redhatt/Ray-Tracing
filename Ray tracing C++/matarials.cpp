@@ -1,3 +1,4 @@
+#include "globals.h"
 #include "color.h"
 #include "vector.h"
 #include "matarials.h"
@@ -7,6 +8,7 @@ Matarial::Matarial(float absorb,
 				   float emission,
 				   float reflectDiv,
 				   float throughDiv,
+				   float grain,
 				   int emissionType,
 				   const Color &ambient,
 				   const Color &diffuse,
@@ -15,6 +17,7 @@ Matarial::Matarial(float absorb,
 											emission(emission),
 											reflectDiv(reflectDiv),
 											throughDiv(throughDiv),
+											grain(grain),
 											emissionType(emissionType),
 											ambient(ambient),
 											diffuse(diffuse),
@@ -88,7 +91,9 @@ void Matarial::setRIndex(float rIndex)
 
 Color Matarial::getAmbient()
 {
-	return ambient;
+	Color c = (grain * (((2.0*rand()/RAND_MAX) - 1.0))) + ambient;
+	c.clamp();
+	return c;
 }
 
 void Matarial::setAmbient(Color &ambient)
@@ -124,9 +129,63 @@ void Matarial::setEmissionType(int emissionType) {
 	this->emissionType = emissionType;
 }
 
-float Matarial::getEmissionFactor(float distance){
-	if (emissionType == 2) return sqr(distance);
-	else if (emissionType == 1) return distance;
-	else if (emissionType == 0) return 1.0;
+void Matarial::setReflection(bool val)
+{
+	this->reflection = val;
+}
+bool Matarial::getReflection()
+{
+	return reflection;
+}
+
+void Matarial::setLight(bool val)
+{
+	this->light = val;
+}
+bool Matarial::getLight()
+{
+	return light;
+}
+
+void Matarial::setRefraction(bool val)
+{
+	this->refraction = val;
+}
+bool Matarial::getRefraction()
+{
+	return refraction;
+}
+
+void Matarial::setGrain(float val)
+{
+	this->grain = val;
+}
+float Matarial::getGrain()
+{
+	return grain;
+}
+
+void Matarial::setAngularHueFactor(float val)
+{
+	this->angularHueFactor = val;
+}
+float Matarial::getAngularHueFactor()
+{
+	return angularHueFactor;
+}
+
+void Matarial::setAmbienceShadow(bool val)
+{
+	this->ambienceShadow = val;
+}
+bool Matarial::getAmbienceShadow()
+{
+	return ambienceShadow;
+}
+
+float Matarial::getEmissionFactor(float distance2){
+	if (emissionType == 2) return distance2;
+	else if (emissionType == 1) return sqrt(distance2);
+	else if (emissionType == 0) return 100;
 	else return 1.0;
 }

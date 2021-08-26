@@ -1,7 +1,7 @@
 #ifndef SHAPE_H
 #define SHAPE_H
 
-#include <vector>
+#include "globals.h"
 
 #include "matarials.cpp"
 #include "vector.h"
@@ -27,12 +27,12 @@ inline std::ostream &operator<<(std::ostream &os, TreeData &t)
 class Shape
 {
 public:
-    int maxDepth = 3;
+    int maxDepth = 4;
     virtual ~Shape() {}
 
     virtual bool intersect( Intersection &intersection) = 0;
     virtual bool doesIntersect(const Ray &ray) = 0;
-    virtual Light light(const Point &point, const Point &lastPoint, Vector &out, int depth, ShapeSet *shapes) = 0;
+    virtual Light light(const Point &point, const Point &lastPoint, Vector &income, int depth, bool inside, ShapeSet *shapes) = 0;
     virtual Point getPoint() = 0;
     virtual Matarial getMatarial() = 0;
     virtual Vector maxAlong(const Vector &axis) = 0;
@@ -53,7 +53,7 @@ public:
     void addLight(Shape *shape);
     virtual bool intersect(Intersection &intersection);
     virtual bool doesIntersect(const Ray &ray);
-    virtual Light light(const Point &point, const Point &lastPoint, Vector &out, int depth, ShapeSet *shapes);
+    virtual Light light(const Point &point, const Point &lastPoint, Vector &income, int depth, bool inside, ShapeSet *shapes);
     virtual bool intersectLight(Intersection &intersection);
     virtual bool doesIntersectLight(const Ray &ray);
     virtual Point getPoint();
@@ -74,7 +74,7 @@ protected:
     Point position;
     Vector normal;
     Matarial matarial;
-    float radius = 1e2;
+    float radius = 5e2;
 
 public:
     Plane(const Point &position, const Vector &normal);
@@ -82,7 +82,7 @@ public:
 
     virtual bool intersect( Intersection &intersection);
     virtual bool doesIntersect(const Ray &ray);
-    virtual Light light(const Point &point, const Point &lastPoint, Vector &out, int depth, ShapeSet *shapes);
+    virtual Light light(const Point &point, const Point &lastPoint, Vector &income, int depth, bool inside, ShapeSet *shapes);
     virtual void setMatarial(const Matarial &matarial);
     virtual Matarial getMatarial();
     virtual Point getPoint();
@@ -107,7 +107,7 @@ public:
     virtual bool intersect( Intersection &intersection);
     virtual bool doesIntersect(const Ray &ray);
     virtual Vector getNormal(const Point &point);
-    virtual Light light(const Point &point, const Point &lastPoint, Vector &out, int depth, ShapeSet *shapes);
+    virtual Light light(const Point &point, const Point &lastPoint, Vector &income, int depth, bool inside, ShapeSet *shapes);
     virtual void setMatarial(const Matarial &matarial);
     virtual Matarial getMatarial();
     virtual Point getPoint();
@@ -128,7 +128,7 @@ class Triangle : public Shape
 
         virtual bool intersect( Intersection &intersection);
         virtual bool doesIntersect(const Ray &ray);
-        virtual Light light(const Point &point, const Point &lastPoint, Vector &out, int depth, ShapeSet *shapes);
+        virtual Light light(const Point &point, const Point &lastPoint, Vector &income, int depth, bool inside, ShapeSet *shapes);
         virtual Point getPoint();
         virtual Matarial getMatarial();
         virtual void setMatarial(const Matarial &matarial);
@@ -150,7 +150,7 @@ class Polygon : public Shape
 
         virtual bool intersect( Intersection &intersection);
         virtual bool doesIntersect(const Ray &ray);
-        virtual Light light(const Point &point, const Point &lastPoint, Vector &out, int depth, ShapeSet *shapes);
+        virtual Light light(const Point &point, const Point &lastPoint, Vector &income, int depth, bool inside, ShapeSet *shapes);
         virtual Point getPoint();
         virtual Matarial getMatarial();
         virtual void setMatarial(const Matarial &matarial);

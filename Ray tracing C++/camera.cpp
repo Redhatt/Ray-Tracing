@@ -1,7 +1,6 @@
+#include "globals.h"
 
 #include "camera.h"
-
-#include <cmath>
 
 PerspectiveCamera::PerspectiveCamera(Point origin,
 									 Vector target, Vector upguide, float fov, float aspectRatio)
@@ -24,6 +23,11 @@ Ray PerspectiveCamera::makeRay(Vector2 point) const
 }
 
 Ray PerspectiveCamera::getRay(int x, int y, int pWidth, int pHeight) const
+{
+	return makeRay(Vector2(((2.0 * x) / pWidth) - 1.0, ((2.0 * y) / pHeight) - 1.0));
+}
+
+Ray PerspectiveCamera::getRays(float x, float y, int pWidth, int pHeight) const
 {
 	return makeRay(Vector2(((2.0 * x) / pWidth) - 1.0, ((2.0 * y) / pHeight) - 1.0));
 }

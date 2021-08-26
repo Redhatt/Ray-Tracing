@@ -1,14 +1,7 @@
 #ifndef MATHS_H
 #define MATHS_H
 
-#include <iostream>
-#ifndef NULL
-#define NULL 0
-#endif
-
-#ifndef PI
-#define PI 3.1415926f
-#endif
+#include "globals.h"
 
 inline float sqr(float n)
 {

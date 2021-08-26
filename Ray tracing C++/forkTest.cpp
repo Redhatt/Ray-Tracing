@@ -1,79 +1,39 @@
-#include <iostream>
-#include <thread>
-#include <vector>
-#include <string>
-#include <pthread.h>
+#include "globals.h"
+
+#include "vector.cpp"
+#include "ray.cpp"
+#include "shape.cpp"
+#include "camera.cpp"
+#include "color.cpp"
+#include "matarials.h"
+#include "light.cpp"
+#include "objParser.cpp"
+#include "threadPool.h"
 
 using namespace std;
 
-struct Inputs
+
+
+void cc()
 {
-    int a, b, x, y, w;
-    vector<vector<int>> *v;
-};
-
-void *fille(void *threadArgs)
-{
-
-    struct Inputs *input;
-
-    input = (struct Inputs *) threadArgs;
-    int a = input->a;
-    int b = input->b;
-    int x = input->x;
-    int y = input->y;
-    int w = input->w;
-
-    for (int i=a; i<x; i++){
-        for (int j=b; j<y; j++){
-            (*input->v)[i][j] = w;
-        }
+    for (int i=0; i<1; i++){
+        cout<<rand()<<endl;
     }
 }
 
-int main(){
-    int w, l;
-    w = 10;
-    l = 10;
-    vector<vector<int>> v(w, vector<int>(l, 0));
+int main() {
+    int v = 0;
     
-    // thread th1(fille, 0, 0, 5, 10, ref(a), ref(v));
-    // thread th2(fille, 5, 0, 10, 10, ref(b), ref(v));
-
-
-
-
-    struct Inputs input1;
+    // for (int i=0; i<10; i++) {
+    //     cout<<time(0)<<endl;
+    //     for (int k=0; k<100000; k++) v++;
+    //     for (int k=0; k<100000; k++) v--;
+    //     for (int k=0; k<100000; k++) v++;
+    //     for (int k=0; k<100000; k++) v--;
+    // }
+    srand(time(0));
     
-    input1.a = 0;
-    input1.b = 0;
-    input1.x = 5;
-    input1.y = 10;
-    input1.w = 2;
-    input1.v = &v;
-
-    struct Inputs input2;
+    for (int i=0; i<10; i++) cc();
     
-    input2.a = 5;
-    input2.b = 0;
-    input2.x = 10;
-    input2.y = 10;
-    input2.w = 3;
-    input2.v = &v;
-    pthread_t th[2];
-    struct Inputs thData[2] = {input1, input2};
-    for (int i=0; i<2; i++){
-        pthread_create(&th[i], NULL, fille, (void *)&thData[i]);
-    }
-    for (int i=0; i<2; i++){
-        pthread_join(th[i], NULL);
-    }
-
-    // fille((void *)&input);
-
-    for (auto x: v){
-        for (auto y: x) cout<<y<<" ";
-        cout<<endl;
-    }
     return 0;
 }

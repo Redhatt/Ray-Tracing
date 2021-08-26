@@ -1,6 +1,8 @@
 #ifndef RAY_H
 #define RAY_H
 
+#include "globals.h"
+
 #include "vector.h"
 #include "color.h"
 #include "light.h"
@@ -45,7 +47,7 @@ struct Intersection
 
     bool intersected() const;
     Point position() const;
-    void getSurfaceLight(Vector &out, ShapeSet *shapes, int depth);
+    void getSurfaceLight(Vector &out, ShapeSet *shapes, int depth, bool inside);
 };
 
 #endif

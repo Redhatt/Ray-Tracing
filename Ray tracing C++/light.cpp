@@ -1,3 +1,5 @@
+#include "globals.h"
+
 #include "light.h"
 
 Light::Light() : color(),

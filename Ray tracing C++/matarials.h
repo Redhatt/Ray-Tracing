@@ -1,22 +1,32 @@
 #ifndef MATARIALS_H
 #define MATARIALS_H
 
+#include "globals.h"
 #include "color.h"
 #include "vector.h"
 
 class Matarial
 {
 protected:
-	float absorb, through, emission, reflectDiv, throughDiv, rIndex;
+	float absorb, through, emission, reflectDiv, throughDiv, rIndex=1.0f;
 	Color ambient, diffuse, specular;
 	int emissionType;
 
+	bool reflection = true;
+	bool light = true;
+	bool refraction = false;
+	bool ambienceShadow = true;
+
+	float grain = 0.01;
+	float angularHueFactor = 0.5;
+
 public:
-	Matarial(float absorb = 0.0002,
-			 float through = 0.0,
+	Matarial(float absorb = 0.8,
+			 float through = 0.99,
 			 float emission = 0.0,
-			 float reflectDiv = 0 * PI/1000,
+			 float reflectDiv = 1 * PI/100,
 			 float throughDiv = 0.0,
+			 float grain=0.0,
 			 int emissionType = 2,
 			 const Color &ambient = Color(0.5),
 			 const Color &diffuse = Color(0.5),
@@ -54,6 +64,24 @@ public:
 
 	virtual int getEmissionType();
 	virtual void setEmissionType(int emissionType);
+
+	virtual void setReflection(bool val);
+	virtual bool getReflection();
+
+	virtual void setLight(bool val);
+	virtual bool getLight();
+
+	virtual void setRefraction(bool val);
+	virtual bool getRefraction();
+
+	virtual void setGrain(float val);
+	virtual float getGrain();
+
+	virtual void setAngularHueFactor(float val);
+	virtual float getAngularHueFactor();
+
+	virtual void setAmbienceShadow(bool val);
+	virtual bool getAmbienceShadow();
 
 	virtual float getEmissionFactor(float distance);
 	// virtual light BSDF();

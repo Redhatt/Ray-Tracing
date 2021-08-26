@@ -1,4 +1,4 @@
-#include <cmath>
+#include "globals.h"
 
 #include "vector.h"
 
@@ -50,6 +50,10 @@ float Vector::normalize()
 {
 	float l = length();
 
+	if (l == 0.0f) {
+		// cout<<"Divide by zero! returning zero vector";
+		*this = Vector();
+	}
 	*this /= l;
 
 	return l;

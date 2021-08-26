@@ -1,7 +1,7 @@
 #ifndef COLOR_H
 #define COLOR_H
 
-#include <iostream>
+#include "globals.h"
 
 struct Color
 {
@@ -10,6 +10,8 @@ struct Color
 	Color();
 	Color(float l);
 	Color(float r, float g, float b);
+	Color(double r, double g, double b);
+	Color(int r, int g, int b);
 
 	virtual ~Color();
 
@@ -18,6 +20,7 @@ struct Color
 
 	Color &operator=(const Color &c);
 	Color &operator+=(const Color &c);
+	Color &operator+=(float f);
 	Color &operator*=(const Color &c);
 	Color &operator*=(float f);
 };
