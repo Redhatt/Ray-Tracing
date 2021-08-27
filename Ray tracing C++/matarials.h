@@ -8,7 +8,8 @@
 class Matarial
 {
 protected:
-	float absorb, through, emission, reflectDiv, throughDiv, rIndex=0.9f;
+	float absorb, through, emission; 
+	float reflectDiv, throughDiv, rIndex=1.09f;
 	Color ambient, diffuse, specular;
 	int emissionType;
 
@@ -17,19 +18,19 @@ protected:
 	bool refraction = true;
 	bool ambienceShadow = true;
 
-	float grain = 0.01;
+	float grain = 0.0;
 	float angularHueFactor = 0.5;
 
 public:
 	Matarial(float absorb = 0.028,
 			 float through = 0.99,
 			 float emission = 0.0,
-			 float reflectDiv = 1 * PI/100,
-			 float throughDiv = 0.0,
+			 float reflectDiv = 0 * PI/150,
+			 float throughDiv = 0 * PI/150,
 			 float grain=0.0,
 			 int emissionType = 2,
-			 const Color &ambient = Color(0.01),
-			 const Color &diffuse = Color(0.01),
+			 const Color &ambient = Color(0.5),
+			 const Color &diffuse = Color(0.5),
 			 const Color &specular = Color(1.0));
 
 	virtual ~Matarial();

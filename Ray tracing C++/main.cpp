@@ -72,22 +72,22 @@ void *scene(void *args)
 
 int main()
 {
-    srand(time(0));
+    // srand(time(0));
 
     int height = 500;
     int width = 1000;
 
-    // Point cameraOrigin = Point(-1, 8, 1);
-    // Point cameraOrigin = Point(4, 4, 12);
-    Point cameraOrigin = Point(8, 8, 8);
-    // Point cameraOrigin = Point(0, 3, 0);
+    // Point cameraOrigin = Point(-1, 5, 1);
+    // Point cameraOrigin = Point(4, 3.5, 17);
+    // Point cameraOrigin = Point(8, 8, 8);
+    Point cameraOrigin = Point(0, 3, 0);
 
-    // Vector cameraTraget = Vector(0, 0, 0);
     Vector cameraTraget = Vector(0, 0, 0);
+    // Vector cameraTraget = Vector(4, 3.5, 0);
 
-    Vector cameraGuide = Vector(-1, -1, 1);
-    // Vector cameraGuide = Vector(0, 0, 1);
-    // Vector cameraGuide = Vector(0, 0, 1);
+    // Vector cameraGuide = Vector(-1, -1, 1);
+    Vector cameraGuide = Vector(0, 0, 1);
+    // Vector cameraGuide = Vector(0, 1, 0);
 
     float cameraFOV = PI / 8;
     float cameraRatio = float(width) / float(height);
@@ -149,7 +149,7 @@ int main()
     // backWall.setMatarial(mat1);
 
     Plane floor(Point(0, 0, -6), Vector(0, 0, 1));
-    Matarial mat2 = Matarial(0.85, 0, 0, PI / 50, 0.0, 0.01, 2,
+    Matarial mat2 = Matarial(0.85, 0, 0, PI / 50, 0.0, 0.0, 2,
                              Color(184, 255, 161),
                              Color(184, 255, 161),
                              Color(1.0, 1.0, 1.0));
@@ -181,31 +181,34 @@ int main()
     mat5.setReflection(false);
     ball3.setMatarial(mat5);
 
-    Sphere light(Point(500, -500, 500), 100);
-    Matarial mat6 = Matarial(0.0, 0.0, 30, PI / 100, 0.0, 0, 0,
+    Sphere light(Point(500, -500, 500), 1);
+    Matarial mat6 = Matarial(0.0, 0.0, 20, PI / 100, 0.0, 0, 0,
                              Color(1.0, 1.0, 1.0),
                              Color(1.0, 1.0, 1.0),
                              Color(1.0, 1.0, 1.0));
     light.setMatarial(mat6);
 
-    for (int j=20; j>=-50; j-=2){
+    for (int j=-20; j>=-25; j-=2){
         for (int i=-50; i<50; i+=2) {
             
-            if ((i+1000)%2) continue;
+            if (((i+j+1000)%3)){}
+            else continue;
 
             float randColor = 0.8;
-            float base = 0.2;
-            Sphere *ball = new Sphere(Point(i, j + 5 * float(rand()) / RAND_MAX, -4.1), 1);
+            float base = 0.3;
+            Sphere *ball = new Sphere(Point(i, j + float(rand()) / RAND_MAX, 2*float(rand()) / RAND_MAX), 1);
             Matarial mat = Matarial();
-            mat.setReflection(!(i+j)%5);
+            // mat.setReflection(!(i+j)%5);
             Color color = Color(base + randColor * float(rand()) / RAND_MAX, 
                                 base + randColor * float(rand()) / RAND_MAX, 
                                 base + randColor * float(rand()) / RAND_MAX);
 
             mat.setAmbient(color);
             mat.setDiffuse(color);
-            mat.setGrain(0.03);
+            mat.setGrain(0.0);
             mat.setRefraction(false);
+            mat.setReflection(false);
+            mat.setAbsorb(0.02);
             ball->setMatarial(mat);
 
             shapes.addShape(ball);
@@ -216,7 +219,7 @@ int main()
 
 
     shapes.addLight(&light);
-    // shapes.addShape(&light);
+    shapes.addShape(&light);
 
     // shapes.addShape(&backWall);
     shapes.addShape(&floor);
@@ -226,7 +229,7 @@ int main()
 
     start = clock(); //---------------------
 
-    fileReader("cube.obj", &shapes, 0.0f);
+    fileReader("lens2.obj", &shapes, 0.001f);
 
     fileRead = clock(); //---------------------
 
@@ -241,8 +244,8 @@ int main()
     pthread_mutex_init(&mutexQueue, NULL);
     pthread_cond_init(&condQueue, NULL);
 
-    int GridX = 20;
-    int GridY = 20;
+    int GridX = 10;
+    int GridY = 10;
 
     int X = ceil(float(width) / GridX);
     int Y = ceil(float(height) / GridY);

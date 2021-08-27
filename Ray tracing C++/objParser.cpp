@@ -111,7 +111,7 @@ void fileReader(string filename, ShapeSet *shapes, float randColor=0.0)
 			}
 			Polygon* poly = new Polygon(polyPoints);
 
-			if (randColor != 0.0) {
+			if (randColor > 0.0) {
 				Matarial mat = Matarial();
 				Color color = Color(randColor * float(rand()) / RAND_MAX, 
 									randColor * float(rand()) / RAND_MAX, 

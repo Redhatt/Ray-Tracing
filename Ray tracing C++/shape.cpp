@@ -4,8 +4,8 @@
 #include "matarials.h"
 #include "vector.h"
 
-Light sky(Color(169, 207, 245), 1.0);
-// Light sky();
+// Light sky(Color(169, 207, 245), 1.0);
+Light sky(Color(), 1.0);
 
 Light calculateLight(
     Point point,
@@ -16,11 +16,11 @@ Light calculateLight(
     ShapeSet *shapes,
     int depth,
     bool inside = false,
-    float lightDiv = 0 * PI / 1000,
+    float lightDiv = 0 * PI / 150,
     float ambience = 0.85,
-    int reflects = 3,
+    int reflects = 1,
     int throughs = 1,
-    int lights = 3,
+    int lights = 1,
     int shadow = 1)
 {
     Vector out = -income;
@@ -39,9 +39,9 @@ Light calculateLight(
 
             Intersection intersection(Ray(point, reflectedVector, 1e30));
             shapes->intersectTree(0, intersection);
-            // shapes->intersectLight(intersection);
+            shapes->intersectLight(intersection);
 
-            intersection.getSurfaceLight(reflectedVector, shapes, inside, depth + 1);
+            intersection.getSurfaceLight(reflectedVector, shapes, depth + 1, inside);
 
             finalLight.color += ((1 - matarial.getAbsorb()) / float(reflects)) * intersection.light.color;
         }
@@ -68,6 +68,10 @@ Light calculateLight(
                 // total internal reflection.
                 Vector throughVector = 2 * (dot(normal, out) * normal) - out;
                 
+                throughVector = randomVector(throughVector,
+                                             matarial.getThroughDiv(),
+                                             float(rand()) / RAND_MAX);
+
                 intersection.ray = Ray(point, throughVector, 1e30);
                 shapes->intersectTree(0, intersection);
                 intersection.getSurfaceLight(throughVector, shapes, depth+1, inside);
@@ -75,6 +79,10 @@ Light calculateLight(
             else {
                 Vector throughVector = n * (income - dott * normal) - 
                                        normal * sqrt(critical);
+
+                throughVector = randomVector(throughVector,
+                                             matarial.getThroughDiv(),
+                                             float(rand()) / RAND_MAX);
 
                 intersection.ray = Ray(point, throughVector, 1e30);
                 shapes->intersectTree(0, intersection);
