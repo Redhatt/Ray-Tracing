@@ -46,7 +46,7 @@ Intersection::Intersection()
 	: ray(),
 	  t(RAY_T_MAX),
 	  pShape(NULL),
-	  light(Color(0.0, 0.0, 1.0), 1.0f)
+	  light(Color(0.0, 0.0, 0.0), 1.0f)
 {
 }
 
@@ -54,7 +54,7 @@ Intersection::Intersection(const Intersection &i)
 	: ray(i.ray),
 	  t(i.t),
 	  pShape(i.pShape),
-	  light(Color(0.0, 0.0, 1.0), 1.0f)
+	  light(Color(0.0, 0.0, 0.0), 1.0f)
 {
 }
 
@@ -62,7 +62,7 @@ Intersection::Intersection(const Ray &ray)
 	: ray(ray),
 	  t(ray.tMax),
 	  pShape(NULL),
-	  light(Color(0.0, 0.0, 1.0), 1.0f)
+	  light(Color(0.0, 0.0, 0.0), 1.0f)
 {
 }
 

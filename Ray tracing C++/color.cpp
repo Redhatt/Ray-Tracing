@@ -105,3 +105,11 @@ Color hueRotate(const Color &color, float hue)
 
   return newColor;
 }
+
+Color randomColor(float limit)
+{
+    Color c = Color(float(rand()) * RAND_MAX_INV,
+                    float(rand()) * RAND_MAX_INV,
+                    float(rand()) * RAND_MAX_INV);
+    return c;
+}

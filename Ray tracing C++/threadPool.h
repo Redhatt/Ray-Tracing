@@ -21,7 +21,7 @@ struct Task
 inline void *executeTask(Task *task)
 {
     void *r = (*task->f)(task->data);
-    cout<<"Task id: "<< task->id<<" has been executed.\n";
+    // cout<<"Task id: "<< task->id<<" has been executed.\n";
     return r;
 }
 
@@ -34,7 +34,7 @@ void submitTask(Task *task)
     pthread_mutex_lock(&mutexQueue);
     taskQueue.push(task);
     pthread_mutex_unlock(&mutexQueue);
-    pthread_cond_signal(&condQueue);
+    // pthread_cond_signal(&condQueue);
     // cout<<"Task id: "<<task->id<<" submitted. Current queue size: "<<taskQueue.size()<<endl;
 }
 

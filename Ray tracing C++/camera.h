@@ -28,12 +28,13 @@ protected:
 
 public:
 	PerspectiveCamera(Point origin, Vector target,
-					  Vector upguide, float fov, float aspectRatio);
+	                  Vector upguide, float fov, float aspectRatio);
 
 	virtual Ray makeRay(Vector2 point) const;
 	virtual Ray getRay(int x, int y, int pHeight, int pWidth) const;
 	virtual Ray getRays(float x, float y, int pWidth, int pHeight) const;
-
+	virtual Point &getOrigin();
+	virtual void setOrigin(Point &origin);
 };
 
 #endif // CAMERA_H

@@ -9,7 +9,7 @@
 // #include "shape.cpp"
 // #include "camera.cpp"
 // #include "color.cpp"
-// #include "matarials.h"
+// #include "materials.h"
 // #include "light.cpp"
 
 
@@ -112,13 +112,13 @@ void fileReader(string filename, ShapeSet *shapes, float randColor=0.0)
 			Polygon* poly = new Polygon(polyPoints);
 
 			if (randColor > 0.0) {
-				Matarial mat = Matarial();
-				Color color = Color(randColor * float(rand()) / RAND_MAX, 
-									randColor * float(rand()) / RAND_MAX, 
-									randColor * float(rand()) / RAND_MAX);
+				Material mat = Material();
+				Color color = Color(randColor * float(rand())* RAND_MAX_INV, 
+									randColor * float(rand())* RAND_MAX_INV, 
+									randColor * float(rand())* RAND_MAX_INV);
 				mat.setAmbient(color);
 				mat.setAmbient(color);
-				poly->setMatarial(mat);
+				poly->setMaterial(mat);
 			}
 			shapes->addShape(poly);
 		} else {

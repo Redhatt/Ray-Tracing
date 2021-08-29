@@ -1,7 +1,7 @@
 #include "globals.h"
 
 #include "shape.h"
-#include "matarials.h"
+#include "materials.h"
 #include "vector.h"
 
 // Light sky(Color(169, 207, 245), 1.0);
@@ -12,30 +12,36 @@ Light calculateLight(
     Point lastPoint,
     Vector income,
     Vector normal,
-    Matarial matarial,
+    Material material,
     ShapeSet *shapes,
     int depth,
     bool inside = false,
     float lightDiv = 0 * PI / 150,
     float ambience = 0.85,
-    int reflects = 1,
-    int throughs = 1,
+    int reflects = 2,
+    int throughs = 0,
     int lights = 1,
-    int shadow = 1)
+    int shadow = 0)
 {
-    Vector out = -income;
+    // Vector out = -income;
     Light finalLight = Light();
-    finalLight.color += (matarial.getEmission()/matarial.getEmissionFactor((point - lastPoint).length2()) + ambience) * 
-                         matarial.getAmbient();
+
+    // adding ambience light
+    finalLight.color += (material.getEmission()/material.getEmissionFactor((point - lastPoint).length2()) + ambience) * 
+                         material.getAmbient();
 
     // rays reflected
 
-    if (matarial.getReflection() && (!inside)) {
+    if (material.getReflection() && (!inside)) {
+
+        Light ReflectedLight = Light();
+        float reflects_inv = 1.0 / reflects;
+
         for (int i = 0; i < reflects; i++)
         {
-            Vector reflectedVector = randomVector(2 * (dot(normal, out) * normal) - out,
-                                                  matarial.getReflectDiv(),
-                                                  float(rand()) / RAND_MAX);
+            Vector reflectedVector = randomVector(2 * (dot(normal, -income) * normal) + income,
+                                                  material.getReflectDiv(),
+                                                  float(rand())* RAND_MAX_INV);
 
             Intersection intersection(Ray(point, reflectedVector, 1e30));
             shapes->intersectTree(0, intersection);
@@ -43,18 +49,37 @@ Light calculateLight(
 
             intersection.getSurfaceLight(reflectedVector, shapes, depth + 1, inside);
 
-            finalLight.color += ((1 - matarial.getAbsorb()) / float(reflects)) * intersection.light.color;
+            // relfection gets less dominate with reflection distance when Reflect deviation is high.
+            // factor = (1 + alpha)^(-sqr(beta * distance * reflection_diviation))
+            // alpah beta are adjustable parameters.
+            // the same can be applied to refraction for blur effects.
+     
+            float alpha = 1.7;
+            float beta = 6;
+            // float gamma = 0.15;
+            float factor = pow(1 + alpha, -sqr(beta * intersection.t * material.getReflectDiv()));
+            
+            // factor = gamma + (1 - gamma) * factor;
+            if (factor < 1e-4) break;
+            // float factor = 1.0f;
+
+            ReflectedLight.color += (factor * (1 - material.getAbsorb())) * intersection.light.color;
         }
+
+        finalLight.color += reflects_inv * ReflectedLight.color;
     }
 
     // rays through refarction
-    if (matarial.getRefraction())
+    if (material.getRefraction())
     {
+        Light throughLight = Light();
+        float throughs_inv = 1.0 / throughs;
+
         for (int i = 0; i < throughs; i++)
         {
-            float n = 1.0 / matarial.getRIndex();
+            float n = 1.0 / material.getRIndex();
             if (inside) {
-                n = matarial.getRIndex();
+                n = material.getRIndex();
             }
 
             income.normalize();
@@ -66,11 +91,11 @@ Light calculateLight(
 
             if (critical <= 0.0f) {
                 // total internal reflection.
-                Vector throughVector = 2 * (dot(normal, out) * normal) - out;
+                Vector throughVector = 2 * (dot(normal, -income) * normal) + income;
                 
                 throughVector = randomVector(throughVector,
-                                             matarial.getThroughDiv(),
-                                             float(rand()) / RAND_MAX);
+                                             material.getThroughDiv(),
+                                             float(rand())* RAND_MAX_INV);
 
                 intersection.ray = Ray(point, throughVector, 1e30);
                 shapes->intersectTree(0, intersection);
@@ -81,29 +106,34 @@ Light calculateLight(
                                        normal * sqrt(critical);
 
                 throughVector = randomVector(throughVector,
-                                             matarial.getThroughDiv(),
-                                             float(rand()) / RAND_MAX);
+                                             material.getThroughDiv(),
+                                             float(rand())* RAND_MAX_INV);
 
                 intersection.ray = Ray(point, throughVector, 1e30);
                 shapes->intersectTree(0, intersection);
                 intersection.getSurfaceLight(throughVector, shapes, depth+1, !inside);
             }
 
-            finalLight.color += (matarial.getThrough() / float(throughs)) * intersection.light.color;
+            throughLight.color += material.getThrough() * intersection.light.color;
         }
+
+        finalLight.color += throughs_inv * throughLight.color;
     }
 
     // rays towards light
-    if (matarial.getLight() && (!inside)) {
-        for (std::vector<Shape *>::iterator iter = shapes->lights.begin();
-             iter != shapes->lights.end(); iter++)
+    if (material.getLight() && (!inside)) {
+
+        Light lightSourceLight = Light();
+        float light_inv = 1.0 / lights;
+
+        for (int i=0; i<shapes->lights.size(); i++)
         {
-            Shape *light = *iter;
+            Shape *light = shapes->lights[i];
             for (int i = 0; i < lights; i++)
             {
                 Vector lightVector = randomVector(light->getPoint() - point,
                                                   lightDiv,
-                                                  float(rand()) / RAND_MAX);
+                                                  float(rand())* RAND_MAX_INV);
 
                 Intersection intersection(Ray(point, lightVector, 1e30));
                 
@@ -111,31 +141,33 @@ Light calculateLight(
 
                 if (intersection.pShape == light || light->intersect(intersection))
                 {
-                    finalLight.color += (light->getMatarial().getEmission() * (1 - matarial.getAbsorb()) / 
-                                         (float(lights) * light->getMatarial().getEmissionFactor((light->getPoint() - point).length2()))) *
-                                        light->getMatarial().getDiffuse() * matarial.getDiffuse() * std::max(0.0f, dot(normal, lightVector));
+                     lightSourceLight.color += (light->getMaterial().getEmission() * (1 - material.getAbsorb()) / 
+                                         (light->getMaterial().getEmissionFactor((light->getPoint() - point).length2()))) *
+                                        light->getMaterial().getDiffuse() * material.getDiffuse() * std::max(0.0f, dot(normal, lightVector));
 
-                    finalLight.color += (light->getMatarial().getEmission() * (1 - matarial.getAbsorb()) / 
-                                          (float(lights) * light->getMatarial().getEmissionFactor((light->getPoint() - point).length2()))) *
-                                        light->getMatarial().getSpecular() * matarial.getSpecular() * std::max(0.0f, dot(normal, (lightVector + out).normalized()));
+                    lightSourceLight.color += (light->getMaterial().getEmission() * (1 - material.getAbsorb()) / 
+                                          (light->getMaterial().getEmissionFactor((light->getPoint() - point).length2()))) *
+                                        light->getMaterial().getSpecular() * material.getSpecular() * std::max(0.0f, sqr(dot(normal, (lightVector - income).normalized())));
                 }
             }
         }
+
+        finalLight.color += light_inv * lightSourceLight.color;
     }
 
     // rays to get ambient shadow
-    if (matarial.getAmbienceShadow() && (!inside))
+    if (material.getAmbienceShadow() && (!inside))
     {
         for (int i=0; i<shadow; i++)
         {
             Vector shadowVector = randomVector(normal,
                                                PI/2,
-                                               float(rand()) / RAND_MAX);
+                                               float(rand())* RAND_MAX_INV);
 
-            Intersection intersection(Ray(point, shadowVector, 0.25));
+            Intersection intersection(Ray(point, shadowVector, 0.25f));
             shapes->intersectTree(0, intersection);
 
-            if (intersection.pShape != NULL && intersection.pShape->getMatarial().getEmission() == 0.0f)
+            if (intersection.pShape != NULL && intersection.pShape->getMaterial().getEmission() == 0.0f)
             {
                 finalLight.color *= 0.97;
             }
@@ -171,7 +203,7 @@ bool ShapeSet::intersect(Intersection &intersect)
          iter != shapes.end();
          iter++)
     {
-        calls += 1;
+        // calls += 1;
         Shape *curshape = *iter;
         if (curshape->intersect(intersect))
             doesIntersect = true;
@@ -237,14 +269,15 @@ Light ShapeSet::light(const Point &point, const Point &lastPoint, Vector &out, i
     return sky;
 }
 
-Matarial ShapeSet::getMatarial()
+Material &ShapeSet::getMaterial()
 {
-    return Matarial();
+    Material *material = new Material();
+    return *material;
 }
 
 bool ShapeSet::intersectTree(int node, Intersection &intersection)
 {
-    if (node >= 2*shapes.size() - 1) return false;
+    if (node >= (shapes.size()<<1) - 1) return false;
 
     float t;
     if (!doesIntersectBound(intersection.ray, t, tree[node].left, tree[node].right)) return false;
@@ -255,7 +288,7 @@ bool ShapeSet::intersectTree(int node, Intersection &intersection)
     bool check = false;
     if (tree[node].end - tree[node].start <= minSize) {
         for (int i=tree[node].start; i<=tree[node].end; i++) {
-            calls += 1;
+            // calls += 1;
             if (shapes[i]->intersect(intersection)) {
                 check = true;
             }
@@ -264,8 +297,8 @@ bool ShapeSet::intersectTree(int node, Intersection &intersection)
     }
 
     bool checkBoth = false;
-    if (intersectTree(2*node + 1, intersection)) checkBoth = true;
-    if (intersectTree(2*node + 2, intersection)) checkBoth = true;
+    if (intersectTree((node<<1) + 1, intersection)) checkBoth = true;
+    if (intersectTree((node<<1) + 2, intersection)) checkBoth = true;
     return checkBoth;
 
     /*
@@ -331,7 +364,7 @@ bool ShapeSet::doesBVCollide(const Vector &v1, const Vector &v2, const Vector &v
 
 bool ShapeSet::doesIntersectBound(const Ray &ray, float &t, const Vector &v1, const Vector &v2)
 {
-    calls += 1;
+    // calls+=1;
     float t_minx = -1e30;
     float t_miny = -1e30;
     float t_minz = -1e30;
@@ -387,10 +420,14 @@ bool ShapeSet::doesIntersectBound(const Ray &ray, float &t, const Vector &v1, co
         if (t_maxz < t_minz) std::swap(t_maxz, t_minz);
     }
 
-    if (min(t_maxx, min(t_maxy, t_maxz)) < max(t_minx, max(t_miny, t_minz))) return false;
+    float t1 = max(t_minx, max(t_miny, t_minz));
+    float t2 = min(t_maxx, min(t_maxy, t_maxz));
 
-    t = max(t_minx, max(t_miny, t_minz));
-    if (min(t_maxx, min(t_maxy, t_maxz)) < 0.0f) return false;
+    if (t2 < t1) return false;
+
+    t = t1;
+
+    if (t2 < 0.0f) return false;
 
     return true;
 }
@@ -440,7 +477,7 @@ int ShapeSet::setBounds(int node, int low, int high)
 
 void ShapeSet::buildTree(int node, int low, int high)
 {
-    if ((node >= 2*shapes.size() - 1) || high < low) return;
+    if ((node >= (shapes.size()<<1) - 1) || high < low) return;
     int axis = setBounds(node, low, high);
 
     if (high - low + 1 < minSize) return;
@@ -479,8 +516,8 @@ void ShapeSet::buildTree(int node, int low, int high)
     }
 
     int index = (low + high) / 2;
-    buildTree(2*node + 1, low, index);
-    buildTree(2*node + 2, index+1, high);
+    buildTree((node<<1) + 1, low, index);
+    buildTree((node<<1) + 2, index+1, high);
 }
 
 Vector ShapeSet::maxAlong(const Vector &axis)
@@ -506,7 +543,7 @@ void ShapeSet::printTree()
 
 Plane::Plane(const Point &position, const Vector &normal) : position(position),
                                                             normal(normal),
-                                                            matarial()
+                                                            material()
 {
 }
 
@@ -581,24 +618,23 @@ Light Plane::light(const Point &point, const Point &lastPoint, Vector &income, i
     if (depth > maxDepth)
         return sky;
 
-    return calculateLight(point, lastPoint, income, getNormal(lastPoint), matarial, shapes, depth, inside);
+    return calculateLight(point, lastPoint, income, getNormal(lastPoint), material, shapes, depth, inside);
 }
 
-void Plane::setMatarial(const Matarial &matarial)
+void Plane::setMaterial(Material &material)
 {
-    this->matarial = matarial;
+    this->material = material;
 }
 
-Matarial Plane::getMatarial()
+Material &Plane::getMaterial()
 {
-    return matarial;
+    return material;
 }
 
 Vector Plane::maxAlong(const Vector &axis)
 {
     Vector v(axis);
-    v.normalize();
-    return Vector(radius * (v - (normal * dot(v, normal))) + position);
+    return Vector(radius * (v - (normal * dot(v, normal))).normalized() + position);
 }
 
 void Plane::setRadius(float r)
@@ -613,7 +649,7 @@ float Plane::getRadius()
 
 Sphere::Sphere(const Point &center, float radius) : center(center),
                                                     radius(radius),
-                                                    matarial()
+                                                    material()
 {
 }
 
@@ -638,8 +674,10 @@ bool Sphere::intersect(Intersection &intersection)
     if (discriminant < 0.0f)
         return false;
 
-    float t1 = ((-b - sqrt(discriminant)) / (2 * a));
-    float t2 = ((-b + sqrt(discriminant)) / (2 * a));
+    discriminant = sqrt(discriminant);
+
+    float t1 = ((-b - discriminant) / (2 * a));
+    float t2 = ((-b + discriminant) / (2 * a));
 
     if (t1 > RAY_T_MIN && t1 < intersection.t)
     {
@@ -678,8 +716,10 @@ bool Sphere::doesIntersect(const Ray &ray)
     if (discriminant < 0.0f)
         return false;
 
-    float t1 = (-b - sqrt(discriminant) / (2 * a));
-    float t2 = (-b + sqrt(discriminant) / (2 * a));
+    discriminant = sqrt(discriminant);
+    
+    float t1 = ((-b - discriminant) / (2 * a));
+    float t2 = ((-b + discriminant) / (2 * a));
 
     // First check if close intersection is valid
     if (t1 > RAY_T_MIN && t1 < ray.tMax)
@@ -710,17 +750,17 @@ Light Sphere::light(const Point &point, const Point &lastPoint, Vector &income, 
     if (depth > maxDepth)
         return sky;
 
-    return calculateLight(point, lastPoint, income, getNormal(point), matarial, shapes, depth, inside);
+    return calculateLight(point, lastPoint, income, getNormal(point), material, shapes, depth, inside);
 }
 
-void Sphere::setMatarial(const Matarial &matarial)
+void Sphere::setMaterial(Material &material)
 {
-    this->matarial = matarial;
+    this->material = material;
 }
 
-Matarial Sphere::getMatarial()
+Material &Sphere::getMaterial()
 {
-    return matarial;
+    return this->material;
 }
 
 Vector Sphere::maxAlong(const Vector &axis)
@@ -733,7 +773,7 @@ Triangle::Triangle(const Point& point1, const Point& point2, const Point& point3
                                                                       :point1(point1),
                                                                       point2(point2),
                                                                       point3(point3),
-                                                                      matarial()
+                                                                      material()
 {
     normal = cross((point1 - point2), (point3 - point2)).normalized();
 }
@@ -813,7 +853,7 @@ Light Triangle::light(const Point &point, const Point &lastPoint, Vector &income
     if (depth > maxDepth)
         return sky;
 
-    return calculateLight(point, lastPoint, income, getNormal(lastPoint), matarial, shapes, depth, inside);
+    return calculateLight(point, lastPoint, income, getNormal(lastPoint), material, shapes, depth, inside);
 }
 
 Vector Triangle::getNormal(const Point &point)
@@ -823,14 +863,14 @@ Vector Triangle::getNormal(const Point &point)
     return -normal;
 }
 
-void Triangle::setMatarial(const Matarial &matarial)
+void Triangle::setMaterial(Material &material)
 {
-    this->matarial = matarial;
+    this->material = material;
 }
 
-Matarial Triangle::getMatarial()
+Material &Triangle::getMaterial()
 {
-    return matarial;
+    return material;
 }
 
 Vector Triangle::maxAlong(const Vector &axis)
@@ -856,7 +896,7 @@ Vector Triangle::maxAlong(const Vector &axis)
 
 Polygon::Polygon(const vector<Point>& points)
                               :points(points),
-                              matarial()
+                              material()
 {
     normal = cross((points[0] - points[1]), (points[2] - points[1])).normalized();
 }
@@ -869,6 +909,7 @@ bool Polygon::PointInPolygon(const Point &pt)
 {
     float d = 0.0f, temp;
     int n = points.size();
+
     for (int i=0; i<n; i++){
         Point v1 = points[(i%n)];
         Point v2 = points[((i+1)%n)];
@@ -878,6 +919,7 @@ bool Polygon::PointInPolygon(const Point &pt)
         else
             return false;
     }
+
     return true;
 }
 
@@ -947,7 +989,7 @@ Light Polygon::light(const Point &point, const Point &lastPoint, Vector &income,
     if (depth > maxDepth)
         return sky;
 
-    return calculateLight(point, lastPoint, income, getNormal(lastPoint), matarial, shapes, depth, inside);
+    return calculateLight(point, lastPoint, income, getNormal(lastPoint), material, shapes, depth, inside);
 }
 
 Vector Polygon::getNormal(const Point &point)
@@ -957,14 +999,14 @@ Vector Polygon::getNormal(const Point &point)
     return -normal;
 }
 
-void Polygon::setMatarial(const Matarial &matarial)
+void Polygon::setMaterial(Material &material)
 {
-    this->matarial = matarial;
+    this->material = material;
 }
 
-Matarial Polygon::getMatarial()
+Material &Polygon::getMaterial()
 {
-    return matarial;
+    return material;
 }
 
 Vector Polygon::maxAlong(const Vector &axis)

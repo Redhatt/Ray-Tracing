@@ -5,7 +5,7 @@
 #include "shape.cpp"
 #include "camera.cpp"
 #include "color.cpp"
-#include "matarials.h"
+#include "materials.h"
 #include "light.cpp"
 #include "objParser.cpp"
 #include "threadPool.h"
@@ -13,27 +13,38 @@
 using namespace std;
 
 
-
-void cc()
+class Test
 {
-    for (int i=0; i<1; i++){
-        cout<<rand()<<endl;
-    }
+public:
+    int check = 1;
+
+    Test(){};
+    ~Test(){};
+
+    void setCheck(int val);
+    int getCheck();
+};
+
+void Test::setCheck(int val)
+{   
+    this->check = val;
 }
 
-int main() {
-    int v = 0;
+int Test::getCheck()
+{
+    return this->check;
+}
+
+int main()
+{
     
-    // for (int i=0; i<10; i++) {
-    //     cout<<time(0)<<endl;
-    //     for (int k=0; k<100000; k++) v++;
-    //     for (int k=0; k<100000; k++) v--;
-    //     for (int k=0; k<100000; k++) v++;
-    //     for (int k=0; k<100000; k++) v--;
-    // }
-    srand(time(0));
-    
-    for (int i=0; i<10; i++) cc();
-    
+    Sphere *ball = new Sphere(Point(0, 0, 0), 2);
+    Material *mat = new Material();
+
+    ball->setMaterial(*mat);
+    cout<<ball->getMaterial().getReflection()<<endl;
+    ball->getMaterial().setReflection(false);
+    cout<<ball->getMaterial().getReflection()<<endl;
+
     return 0;
 }
