@@ -33,8 +33,10 @@ Vector::Vector(float f)
 }
 
 Vector::Vector(const glm::vec3 &v)
+	: x(v.x),
+	  y(v.y),
+	  z(v.z)
 {
-	Vector(v.x, v.y, v.z);
 }
 
 Vector::~Vector()

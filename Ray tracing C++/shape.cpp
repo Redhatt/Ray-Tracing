@@ -281,7 +281,6 @@ bool ShapeSet::intersectTree(int node, Intersection &intersection)
 
     float t;
     if (!doesIntersectBound(intersection.ray, t, tree[node].left, tree[node].right)) return false;
-    
     // this is with below comment codes 196 line no: and below 221 line no: it didn't optimize rather increased calls
     // if ((node == 0) && (!doesIntersectBound(intersection.ray, t, tree[node].left, tree[node].right))) return false;
 
@@ -379,13 +378,17 @@ bool ShapeSet::doesIntersectBound(const Ray &ray, float &t, const Vector &v1, co
         {
             // nothing
         }
-        else return false;
+        else 
+        {
+            return false;
+        }
     }
     else {
         t_minx = (v1.x - ray.origin.x) / ray.direction.x ;
         t_maxx = (v2.x - ray.origin.x) / ray.direction.x ;
 
-        if (t_maxx < t_minx) std::swap(t_maxx, t_minx);
+        if (t_maxx < t_minx) 
+            std::swap(t_maxx, t_minx);
     }
 
     // for y
@@ -395,13 +398,17 @@ bool ShapeSet::doesIntersectBound(const Ray &ray, float &t, const Vector &v1, co
         {
             // nothing
         }
-        else return false;
+        else 
+        {
+            return false;
+        }
     }
     else {
         t_miny = (v1.y - ray.origin.y) / ray.direction.y ;
         t_maxy = (v2.y - ray.origin.y) / ray.direction.y ;
 
-        if (t_maxy < t_miny) std::swap(t_maxy, t_miny);
+        if (t_maxy < t_miny) 
+            std::swap(t_maxy, t_miny);
     }
 
     // for z
@@ -411,23 +418,29 @@ bool ShapeSet::doesIntersectBound(const Ray &ray, float &t, const Vector &v1, co
         {
             // nothing
         }
-        else return false;
+        else 
+        {
+            return false;
+        }
     }
     else {
         t_minz = (v1.z - ray.origin.z) / ray.direction.z ;
         t_maxz = (v2.z - ray.origin.z) / ray.direction.z ;
 
-        if (t_maxz < t_minz) std::swap(t_maxz, t_minz);
+        if (t_maxz < t_minz) 
+            std::swap(t_maxz, t_minz);
     }
 
     float t1 = max(t_minx, max(t_miny, t_minz));
     float t2 = min(t_maxx, min(t_maxy, t_maxz));
 
-    if (t2 < t1) return false;
+    if (t2 < t1) 
+        return false;
 
     t = t1;
 
-    if (t2 < 0.0f) return false;
+    if (t2 < 0.0f) 
+        return false;
 
     return true;
 }

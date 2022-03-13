@@ -1,5 +1,7 @@
 // run this command in cmd
 // g++ windowTest.cpp -L"C:\msys64\mingw64\x86_64-w64-mingw32\freeglut\lib\x64" -lfreeglut -lopengl32 -Wl,--subsystem,windows
+// remove -wl, --sub.... for logs
+
 
 #include <stdlib.h>
 #include <GL/glut.h>
