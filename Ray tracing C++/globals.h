@@ -10,6 +10,11 @@
 #include <time.h>
 #include <math.h>
 #include <GL/glut.h>
+#include <glm/glm.hpp>
+#include <glm/ext.hpp>
+#include <glm/gtx/string_cast.hpp>
+#include <glm/gtx/norm.hpp>
+#include <glm/gtx/fast_square_root.hpp>
 
 #define RAY_T_MAX 1.0e30f
 #define RAY_T_MIN 0.0001f

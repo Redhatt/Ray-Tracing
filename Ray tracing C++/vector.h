@@ -16,6 +16,7 @@ struct Vector
 	Vector(const Vector &v);
 	Vector(float x, float y, float z);
 	Vector(float f);
+	Vector(const glm::vec3 &v);
 
 	virtual ~Vector();
 
@@ -24,6 +25,7 @@ struct Vector
 
 	float normalize();
 	Vector normalized();
+	Vector vectorize(const glm::vec3 &v);
 
 	Vector &operator=(const Vector &v);
 	Vector &operator+=(const Vector &v);
@@ -39,58 +41,68 @@ Vector randomVector(Vector direction, float angleDiv, float randomVal);
 
 inline Vector operator+(const Vector &v1, const Vector &v2)
 {
-	return Vector(v1.x + v2.x,
-				  v1.y + v2.y,
-				  v1.z + v2.z);
+	return Vector(glm::vec3(v1.x, v1.y, v1.z) + glm::vec3(v2.x, v2.y, v2.z));
+	// return Vector(v1.x + v2.x,
+	// 			  v1.y + v2.y,
+	// 			  v1.z + v2.z);
 }
 
 inline Vector operator-(const Vector &v1, const Vector &v2)
 {
-	return Vector(v1.x - v2.x,
-				  v1.y - v2.y,
-				  v1.z - v2.z);
+	return Vector(glm::vec3(v1.x, v1.y, v1.z) - glm::vec3(v2.x, v2.y, v2.z));
+	// return Vector(v1.x - v2.x,
+	// 			  v1.y - v2.y,
+	// 			  v1.z - v2.z);
 }
 
 inline Vector operator*(const Vector &v1, const Vector &v2)
 {
-	return Vector(v1.x * v2.x,
-				  v1.y * v2.y,
-				  v1.z * v2.z);
+
+	return Vector(glm::vec3(v1.x, v1.y, v1.z) * glm::vec3(v2.x, v2.y, v2.z));
+	// return Vector(v1.x * v2.x,
+	// 			  v1.y * v2.y,
+	// 			  v1.z * v2.z);
 }
 
 inline Vector operator*(const Vector &v, float f)
 {
-	return Vector(v.x * f,
-				  v.y * f,
-				  v.z * f);
+	
+	return Vector(f * glm::vec3(v.x, v.y, v.z));
+	// return Vector(v.x * f,
+	// 			  v.y * f,
+	// 			  v.z * f);
 }
 
 inline Vector operator*(float f, const Vector &v)
 {
-	return Vector(f * v.x,
-				  f * v.y,
-				  f * v.z);
+	return Vector(f * glm::vec3(v.x, v.y, v.z));
+	// return Vector(f * v.x,
+	// 			  f * v.y,
+	// 			  f * v.z);
 }
 
 inline Vector operator/(const Vector &v1, const Vector &v2)
 {
-	return Vector(v1.x / v2.x,
-				  v1.y / v2.y,
-				  v1.z / v2.z);
+	return Vector(glm::vec3(v1.x, v1.y, v1.z) / glm::vec3(v2.x, v2.y, v2.z));
+	// return Vector(v1.x / v2.x,
+	// 			  v1.y / v2.y,
+	// 			  v1.z / v2.z);
 }
 
 inline Vector operator/(const Vector &v, float f)
 {
-	return Vector(v.x / f,
-				  v.y / f,
-				  v.z / f);
+	return Vector(glm::vec3(v.x, v.y, v.z)/f);
+	// return Vector(v.x / f,
+	// 			  v.y / f,
+	// 			  v.z / f);
 }
 
 inline Vector operator/(float f, const Vector &v)
 {
-	return Vector(f / v.x,
-				  f / v.y,
-				  f / v.z);
+	return Vector(glm::vec3(v.x, v.y, v.z)/f);
+	// return Vector(f / v.x,
+	// 			  f / v.y,
+	// 			  f / v.z);
 }
 
 inline std::istream &operator>>(std::istream &is, Vector &v)

@@ -32,51 +32,68 @@ Vector::Vector(float f)
 {
 }
 
+Vector::Vector(const glm::vec3 &v)
+{
+	Vector(v.x, v.y, v.z);
+}
+
 Vector::~Vector()
 {
 }
 
 inline float Vector::length2()
 {
-	return sqr(x) + sqr(y) + sqr(z);
+	return glm::length2(glm::vec3(x, y, z));
+	// return sqr(x) + sqr(y) + sqr(z);
 }
 
 inline float Vector::length()
 {
-	return std::sqrt(length2());
+	return glm::length(glm::vec3(x, y, z));
+	//return std::sqrt(length2());
 }
 
 float Vector::normalize()
 {
 	float l = length();
+	glm::vec3 v(glm::normalize(glm::vec3(x, y, z)));
+	x = v.x;
+	y = v.y;
+	z = v.z;
 
-	if (l == 0.0f) {
-		// cout<<"Divide by zero! returning zero vector";
-		*this = Vector();
-	}
-	*this /= l;
+	// if (l == 0.0f) {
+	// 	// cout<<"Divide by zero! returning zero vector";
+	// 	*this = Vector();
+	// }
+	// *this /= l;
+	// Danish
 
 	return l;
 }
 
 Vector Vector::normalized()
 {
-	Vector v(*this);
-	v.normalize();
-	return v;
+	return Vector(glm::normalize(glm::vec3(x, y, z)));
+}
+
+Vector Vector::vectorize(const glm::vec3 &v)
+{
+	return Vector(v);
 }
 
 
 float dot(Vector v1, Vector v2)
 {
-	return (v1.x * v2.x) + (v1.y * v2.y) + (v1.z * v2.z);
+	return glm::dot(glm::vec3(v1.x, v1.y, v1.z), glm::vec3(v2.x, v2.y, v2.z));
+	// return (v1.x * v2.x) + (v1.y * v2.y) + (v1.z * v2.z);
 }
 
 Vector cross(Vector v1, Vector v2)
 {
-	return Vector(v1.y * v2.z - v1.z * v2.y,
-				  v1.z * v2.x - v1.x * v2.z,
-				  v1.x * v2.y - v1.y * v2.x);
+	return Vector(glm::cross(glm::vec3(v1.x, v1.y, v1.z), glm::vec3(v2.x, v2.y, v2.z)));
+	// return Vector(v1.y * v2.z - v1.z * v2.y,
+	// 			  v1.z * v2.x - v1.x * v2.z,
+	// 			  v1.x * v2.y - v1.y * v2.x);
 }
 
 Vector randomVector(Vector direction, float angleDiv, float randomVal)
