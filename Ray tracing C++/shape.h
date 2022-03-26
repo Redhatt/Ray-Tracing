@@ -121,6 +121,7 @@ protected:
     Point point1, point2, point3;
     Vector normal;
     Material material;
+    Point center;
 
 public:
     Triangle(const Point& point1, const Point& point2, const Point& point3);
@@ -130,6 +131,7 @@ public:
     virtual bool doesIntersect(const Ray &ray);
     virtual Light light(const Point &point, const Point &lastPoint, Vector &income, int depth, bool inside, ShapeSet *shapes);
     virtual Point getPoint();
+    virtual Point updatePoint();
     virtual Material &getMaterial();
     virtual void setMaterial(Material &material);
     virtual bool PointInTriangle (const Point &pt);
@@ -143,6 +145,7 @@ protected:
     vector<Point> points;
     Vector normal;
     Material material;
+    Point center;
 
 public:
     Polygon (const vector<Point> &points);
@@ -152,6 +155,7 @@ public:
     virtual bool doesIntersect(const Ray &ray);
     virtual Light light(const Point &point, const Point &lastPoint, Vector &income, int depth, bool inside, ShapeSet *shapes);
     virtual Point getPoint();
+    virtual Point updatePoint();
     virtual Material &getMaterial();
     virtual void setMaterial(Material &material);
     virtual bool PointInPolygon (const Point &pt);

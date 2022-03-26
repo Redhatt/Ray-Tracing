@@ -789,6 +789,7 @@ Triangle::Triangle(const Point& point1, const Point& point2, const Point& point3
                                                                       material()
 {
     normal = cross((point1 - point2), (point3 - point2)).normalized();
+    updatePoint();
 }
 
 Triangle::~Triangle()
@@ -858,7 +859,13 @@ bool Triangle::doesIntersect(const Ray &ray)
 
 Point Triangle::getPoint()
 {
-    return (point1 + point2 + point3)/3;
+    return Point(center);
+}
+
+Point Triangle::updatePoint()
+{
+    center = Point((point1 + point2 + point3)/3);
+    return Point(center);
 }
 
 Light Triangle::light(const Point &point, const Point &lastPoint, Vector &income, int depth, bool inside, ShapeSet *shapes)
@@ -912,6 +919,7 @@ Polygon::Polygon(const vector<Point>& points)
                               material()
 {
     normal = cross((points[0] - points[1]), (points[2] - points[1])).normalized();
+    updatePoint();
 }
 
 Polygon::~Polygon()
@@ -988,12 +996,17 @@ bool Polygon::doesIntersect(const Ray &ray)
 
 Point Polygon::getPoint()
 {
+    return Point(center);
+}
+Point Polygon::updatePoint()
+{
     Point ans = Point();
     for (int i=0; i<points.size(); i++){
         Point p = points[i];
         ans = ans + p;
     }
     ans /= points.size();
+    center = Point(ans);
     return ans;
 }
 

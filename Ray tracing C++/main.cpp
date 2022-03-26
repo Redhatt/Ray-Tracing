@@ -148,35 +148,35 @@ int main()
     // // Material mat1 = Material();
     // backWall.setMaterial(mat1);
 
-    Plane floor(Point(0, 0, -1.1), Vector(0, 0, 1));
-    Material mat2 = Material(0.025, 0, 0, 2 * PI / 150, 0.0, 0.0, 2,
-                             Color(0.1, 0.3, 0.2),
-                             Color(0.1, 0.3, 0.2),
-                             Color(1.0, 1.0, 1.0));
-    floor.setMaterial(mat2);
+    // Plane floor(Point(0, 0, -1.1), Vector(0, 0, 1));
+    // Material mat2 = Material(0.025, 0, 0, 2 * PI / 150, 0.0, 0.0, 2,
+    //                          Color(0.1, 0.3, 0.2),
+    //                          Color(0.1, 0.3, 0.2),
+    //                          Color(1.0, 1.0, 1.0));
+    // floor.setMaterial(mat2);
 
-    Sphere ball1(Point(-2.1, 0, 0), 1);
-    Material mat3 = Material(0.02, 0.0, 0.0, PI / 150, 0.0, 0.0, 2,
-                             Color(0.7, 0.4, 0.1),
-                             Color(0.7, 0.4, 0.1),
-                             Color(1.0, 1.0, 1.0));
+    // Sphere ball1(Point(-2.1, 0, 0), 1);
+    // Material mat3 = Material(0.02, 0.0, 0.0, PI / 150, 0.0, 0.0, 2,
+    //                          Color(0.7, 0.4, 0.1),
+    //                          Color(0.7, 0.4, 0.1),
+    //                          Color(1.0, 1.0, 1.0));
 
-    ball1.setMaterial(mat3);
+    // ball1.setMaterial(mat3);
 
-    Sphere ball2(Point(0, 0, 0.5), 1);
-    Material mat4 = Material(0.02, 0.0, 0.0, PI / 150, 0.0, 0.0, 2,
-                             Color(0.1, 0.6, 0.4),
-                             Color(0.1, 0.6, 0.4),
-                             Color(1.0, 1.0, 1.0));
-    ball2.setMaterial(mat4);
+    // Sphere ball2(Point(0, 0, 0.5), 1);
+    // Material mat4 = Material(0.02, 0.0, 0.0, PI / 150, 0.0, 0.0, 2,
+    //                          Color(0.1, 0.6, 0.4),
+    //                          Color(0.1, 0.6, 0.4),
+    //                          Color(1.0, 1.0, 1.0));
+    // ball2.setMaterial(mat4);
 
-    Sphere ball3(Point(2.1, 0, 1), 1);
-    Material mat5 = Material(0.02, 0.0, 0.0, PI / 150, 0.0, 0.0, 2,
-                             Color(0.4, 0.2, 0.7),
-                             Color(0.4, 0.2, 0.7),
-                             Color(1.0, 1.0, 1.0));
+    // Sphere ball3(Point(2.1, 0, 1), 1);
+    // Material mat5 = Material(0.02, 0.0, 0.0, PI / 150, 0.0, 0.0, 2,
+    //                          Color(0.4, 0.2, 0.7),
+    //                          Color(0.4, 0.2, 0.7),
+    //                          Color(1.0, 1.0, 1.0));
 
-    ball3.setMaterial(mat5);
+    // ball3.setMaterial(mat5);
 
     Sphere light(Point(500, -500, 500), 1);
     Material mat6 = Material(0.0, 0.0, 10, PI / 100, 0.0, 0, 0,
@@ -186,17 +186,15 @@ int main()
     light.setMaterial(mat6);
 
 
-    floor.getMaterial().setReflection(true);
-    floor.getMaterial().setLight(false);
-    floor.getMaterial().setAmbienceShadow(false);
-    ball1.getMaterial().setReflection(false);
-    ball1.getMaterial().setRefraction(false);
-    ball2.getMaterial().setReflection(false);
-    ball3.getMaterial().setReflection(false);
-    ball2.getMaterial().setRefraction(false);
-    ball3.getMaterial().setRefraction(false);
-
-    cout << ball3.getMaterial().getReflection();
+    // floor.getMaterial().setReflection(true);
+    // floor.getMaterial().setLight(false);
+    // floor.getMaterial().setAmbienceShadow(false);
+    // ball1.getMaterial().setReflection(false);
+    // ball1.getMaterial().setRefraction(false);
+    // ball2.getMaterial().setReflection(false);
+    // ball3.getMaterial().setReflection(false);
+    // ball2.getMaterial().setRefraction(false);
+    // ball3.getMaterial().setRefraction(false);
 
     for (int j=-20; j>=-25; j-=2){
         for (int i=-50; i<50; i+=2) {
@@ -220,7 +218,7 @@ int main()
             mat.setAbsorb(0.02);
             ball->setMaterial(mat);
 
-            shapes.addShape(ball);
+            // shapes.addShape(ball);
         }
     }
 
@@ -230,17 +228,17 @@ int main()
     // shapes.addShape(&light);
 
     // shapes.addShape(&backWall);
-    shapes.addShape(&floor);
-    shapes.addShape(&ball1);
-    shapes.addShape(&ball2);
-    shapes.addShape(&ball3);
+    // shapes.addShape(&floor);
+    // shapes.addShape(&ball1);
+    // shapes.addShape(&ball2);
+    // shapes.addShape(&ball3);
 
 
     clock_t start, fileRead, buildingTree, render, fileWrite, threadStart, threadEnd, submitStart, submitEnd;
 
     start = clock(); //---------------------
 
-    // fileReader("ultimateTest.obj", &shapes, 0.0f);
+    fileReader("ultimateTest.obj", &shapes, 0.0f);
 
     fileRead = clock(); //---------------------
 
